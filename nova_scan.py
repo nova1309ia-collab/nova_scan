@@ -224,15 +224,46 @@ def afficher_resultat(raw_file_or_image, nom_fichier, key_dl, key_btn, is_pil=Fa
 
 
 # ── ONGLETS ───────────────────────────────────────────────────────────────────
-tab_cam, tab_mobile, tab_import = st.tabs([
-    "🖥️ Caméra PC",
-    "📱 Mobile",
-    "🖼️ Importer"
+tab_mobile, tab_cam, tab_import = st.tabs([
+    "📱  Mobile",
+    "🖥️  Caméra PC",
+    "🖼️  Importer"
 ])
 
 
 # ══════════════════════════════════
-# ONGLET 1 — st.camera_input (PC)
+# ONGLET 1 — MOBILE
+# ══════════════════════════════════
+with tab_mobile:
+    st.markdown("""
+    <div class="tip-box">
+        💡 Appuie sur <strong>Parcourir</strong> puis choisis
+        <strong>Appareil photo</strong> pour scanner directement,
+        ou sélectionne une photo déjà prise dans ta galerie.
+    </div>
+    """, unsafe_allow_html=True)
+
+    mob_file = st.file_uploader(
+        label="📷  Ouvrir l'appareil photo ou la galerie",
+        type=["jpg", "jpeg", "png", "webp", "bmp", "heic", "heif"],
+        key=f"mob_{sk}",
+    )
+
+    if mob_file is None:
+        st.markdown("""
+        <div class="steps-row">
+            <div class="step-badge step-active">① Prendre / choisir</div>
+            <div class="step-badge">② Générer</div>
+            <div class="step-badge">③ Télécharger</div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        img_mob = Image.open(mob_file)
+        afficher_resultat(img_mob, "nova_scan_mobile.pdf", "dl_mob", "btn_reset_mob", is_pil=True)
+
+
+# ══════════════════════════════════
+# ONGLET 2 — CAMÉRA PC
 # ══════════════════════════════════
 with tab_cam:
     st.markdown("""
@@ -262,38 +293,6 @@ with tab_cam:
     else:
         img_cam = Image.open(io.BytesIO(photo.getvalue()))
         afficher_resultat(img_cam, "nova_scan_document.pdf", "dl_cam", "btn_reset_cam", is_pil=True)
-
-
-# ══════════════════════════════════
-# ONGLET 2 — MOBILE (input natif)
-# ══════════════════════════════════
-with tab_mobile:
-    st.markdown("""
-    <div class="tip-box">
-        💡 Appuie sur <strong>Parcourir</strong> puis choisis
-        <strong>Appareil photo</strong> pour scanner,
-        ou sélectionne une photo déjà prise.
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Sur Android, type="image/*" + pas de list → propose caméra ET galerie
-    mob_file = st.file_uploader(
-        label="📷  Ouvrir l'appareil photo ou la galerie",
-        type=["jpg", "jpeg", "png", "webp", "bmp", "heic", "heif"],
-        key=f"mob_{sk}",
-    )
-
-    if mob_file is None:
-        st.markdown("""
-        <div class="steps-row">
-            <div class="step-badge step-active">① Prendre / choisir</div>
-            <div class="step-badge">② Générer</div>
-            <div class="step-badge">③ Télécharger</div>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        img_mob = Image.open(mob_file)
-        afficher_resultat(img_mob, "nova_scan_mobile.pdf", "dl_mob", "btn_reset_mob", is_pil=True)
 
 
 # ══════════════════════════════════
