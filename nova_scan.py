@@ -5,7 +5,7 @@ import io
 
 st.set_page_config(
     page_title="Nova Scan",
-    page_icon="\U0001f4c4",
+    page_icon="📄",
     layout="centered",
     initial_sidebar_state="collapsed",
 )
@@ -105,7 +105,6 @@ html, body, [data-testid="stAppViewContainer"] {
     border-color: #2979ff !important;
     color: #2979ff !important;
 }
-/* Bouton "Take Photo" du camera_input */
 [data-testid="stCameraInputButton"] {
     background-color: #2979ff !important;
     color: #ffffff !important;
@@ -147,112 +146,133 @@ html, body, [data-testid="stAppViewContainer"] {
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="nova-title">\U0001f4c4 NOVA SCAN</div>', unsafe_allow_html=True)
-st.markdown('<div class="nova-subtitle">Num\u00e9risation instantan\u00e9e \u00b7 Z\u00e9ro installation</div>', unsafe_allow_html=True)
+st.markdown('<div class="nova-title">📄 NOVA SCAN</div>', unsafe_allow_html=True)
+st.markdown('<div class="nova-subtitle">Numérisation instantanée · Zéro installation</div>', unsafe_allow_html=True)
 
-# --- Bouton reset AVANT camera_input ---
-# Si l'utilisateur veut rescanner, on vide session_state ici
-# SANS appeler st.rerun() (pour eviter le NotFoundError DOM)
+# Reset propre via key rotation
 if st.session_state.get("reset_requested"):
     st.session_state["reset_requested"] = False
-    # On ne rerun pas : on laisse camera_input revenir naturellement
-    # en l'ayant vidé via key rotation
-    if "scan_key" not in st.session_state:
-        st.session_state["scan_key"] = 0
-    st.session_state["scan_key"] += 1
+    st.session_state["scan_key"] = st.session_state.get("scan_key", 0) + 1
 
 if "scan_key" not in st.session_state:
     st.session_state["scan_key"] = 0
 
-# --- Lecture camera ---
-# On utilise une key dynamique pour forcer le re-mount propre du widget
-# sans declencher de rerun explicite
-photo = st.camera_input(
-    label="Prendre la photo",
-    label_visibility="collapsed",
-    key=f"cam_{st.session_state['scan_key']}",
-)
+sk = st.session_state["scan_key"]
 
-# --- Branchement selon etat ---
-if photo is None:
-    # Phase cadrage
-    st.markdown("""
-    <div class="steps-row">
-        <div class="step-badge step-active">\u2460 Cadrer</div>
-        <div class="step-badge">\u2461 Capturer</div>
-        <div class="step-badge">\u2462 T\u00e9l\u00e9charger</div>
-    </div>
-    """, unsafe_allow_html=True)
+# ─── ONGLETS ────────────────────────────────────────────────────────────────────
+tab_cam, tab_import = st.tabs(["📷  Caméra", "🖼️  Importer une photo"])
 
-    st.markdown("""
-    <div class="tip-box">
-        \U0001f4a1 <strong>Conseil :</strong> Place le document sur une surface fonc\u00e9e et assure-toi que les 4 coins sont visibles.
-    </div>
-    """, unsafe_allow_html=True)
 
-    st.markdown("""
-    <div class="guide-box">
-        <div class="guide-text">\U0001f4d0 ALIGNE TON DOCUMENT DANS CE CADRE AVANT DE PRENDRE LA PHOTO</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-else:
-    # Phase conversion + telechargement
-    st.markdown("""
-    <div class="steps-row">
-        <div class="step-badge">\u2460 Cadr\u00e9 \u2713</div>
-        <div class="step-badge">\u2461 Captur\u00e9 \u2713</div>
-        <div class="step-badge step-active">\u2462 T\u00e9l\u00e9charger</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    img_bytes = photo.getvalue()
-    image = Image.open(io.BytesIO(img_bytes))
-
+def afficher_resultat(image, nom_fichier, key_dl, key_btn):
+    """Affiche aperçu + infos + bouton download pour une image PIL."""
     if image.mode in ("RGBA", "P", "LA"):
         image = image.convert("RGB")
 
-    img_buffer = io.BytesIO()
-    image.save(img_buffer, format="JPEG", quality=92, optimize=True)
-    img_buffer.seek(0)
-    jpeg_bytes = img_buffer.read()
-
-    pdf_bytes = img2pdf.convert(jpeg_bytes)
+    img_buf = io.BytesIO()
+    image.save(img_buf, format="JPEG", quality=92, optimize=True)
+    pdf_bytes = img2pdf.convert(img_buf.getvalue())
 
     taille_ko = len(pdf_bytes) / 1024
     taille_str = f"{taille_ko/1024:.1f} Mo" if taille_ko >= 1024 else f"{taille_ko:.0f} Ko"
-    largeur_px, hauteur_px = image.size
-    dim_str = f"{largeur_px} \u00d7 {hauteur_px} px"
+    w, h = image.size
 
-    st.markdown('<div class="preview-label">APE\u00c7U DU DOCUMENT CAPTUR\u00c9</div>', unsafe_allow_html=True)
+    st.markdown('<div class="preview-label">APERÇU DU DOCUMENT</div>', unsafe_allow_html=True)
     st.image(image, use_container_width=True)
 
     st.markdown(f"""
     <div class="pdf-info">
-        \U0001f4c4 PDF g\u00e9n\u00e9r\u00e9 avec succ\u00e8s<br>
+        📄 PDF généré avec succès<br>
         Taille : <span>{taille_str}</span> &nbsp;|&nbsp;
-        R\u00e9solution : <span>{dim_str}</span> &nbsp;|&nbsp;
-        Format : <span>JPEG \u2192 PDF sans perte</span>
+        Résolution : <span>{w} × {h} px</span>
     </div>
     """, unsafe_allow_html=True)
 
     st.download_button(
-        label="\u2b07\ufe0f  T\u00c9L\u00c9CHARGER LE PDF",
+        label="⬇️  TÉLÉCHARGER LE PDF",
         data=pdf_bytes,
-        file_name="nova_scan_document.pdf",
+        file_name=nom_fichier,
         mime="application/pdf",
+        key=key_dl,
     )
 
     st.markdown('<hr class="sep">', unsafe_allow_html=True)
 
-    if st.button("\U0001f4f7  Scanner un autre document"):
+    if st.button("🔄  Recommencer", key=key_btn):
         st.session_state["reset_requested"] = True
-        st.session_state["scan_key"] = st.session_state.get("scan_key", 0) + 1
         st.rerun()
 
+
+# ══════════════════════════════════════════════════════
+# ONGLET 1 — CAMÉRA
+# ══════════════════════════════════════════════════════
+with tab_cam:
+    photo = st.camera_input(
+        label="Prendre la photo",
+        label_visibility="collapsed",
+        key=f"cam_{sk}",
+    )
+
+    if photo is None:
+        st.markdown("""
+        <div class="steps-row">
+            <div class="step-badge step-active">① Cadrer</div>
+            <div class="step-badge">② Capturer</div>
+            <div class="step-badge">③ Télécharger</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+        <div class="tip-box">
+            💡 <strong>Conseil :</strong> Place le document sur une surface foncée et assure-toi que les 4 coins sont visibles.
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+        <div class="guide-box">
+            <div class="guide-text">📐 ALIGNE TON DOCUMENT DANS CE CADRE AVANT DE PRENDRE LA PHOTO</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    else:
+        st.markdown("""
+        <div class="steps-row">
+            <div class="step-badge">① Cadré ✓</div>
+            <div class="step-badge">② Capturé ✓</div>
+            <div class="step-badge step-active">③ Télécharger</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        image_cam = Image.open(io.BytesIO(photo.getvalue()))
+        afficher_resultat(image_cam, "nova_scan_document.pdf", "dl_cam", "btn_reset_cam")
+
+
+# ══════════════════════════════════════════════════════
+# ONGLET 2 — IMPORT FICHIER
+# ══════════════════════════════════════════════════════
+with tab_import:
+    st.markdown("""
+    <div class="tip-box">
+        💡 <strong>Formats acceptés :</strong> JPG, PNG, WEBP, BMP — converti automatiquement en PDF haute qualité.
+    </div>
+    """, unsafe_allow_html=True)
+
+    fichier = st.file_uploader(
+        label="Choisir une image",
+        type=["jpg", "jpeg", "png", "webp", "bmp"],
+        label_visibility="collapsed",
+        key=f"upload_{sk}",
+    )
+
+    if fichier is not None:
+        image_imp = Image.open(fichier)
+        nom_pdf = fichier.name.rsplit(".", 1)[0] + ".pdf"
+        afficher_resultat(image_imp, nom_pdf, "dl_import", "btn_reset_import")
+
+
+# ─── FOOTER ─────────────────────────────────────────────────────────────────────
 st.markdown("""
 <hr class="sep">
 <div style="text-align:center; font-size:0.7rem; color:#2e3f5c;">
-    Nova Scan \u00b7 Module Nova Platform \u00b7 Traitement 100% en m\u00e9moire \u00b7 Aucun fichier stock\u00e9
+    Nova Scan · Module Nova Platform · Traitement 100% en mémoire · Aucun fichier stocké
 </div>
 """, unsafe_allow_html=True)
