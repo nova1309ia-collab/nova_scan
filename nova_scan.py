@@ -105,6 +105,28 @@ html, body, [data-testid="stAppViewContainer"] {
     border-color: #2979ff !important;
     color: #2979ff !important;
 }
+/* Bouton "Take Photo" du camera_input */
+[data-testid="stCameraInputButton"] {
+    background-color: #2979ff !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 50px !important;
+    padding: 0.7rem 2.5rem !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 1px !important;
+    cursor: pointer !important;
+    box-shadow: 0 0 18px rgba(41, 121, 255, 0.45) !important;
+    transition: background 0.2s, box-shadow 0.2s !important;
+}
+[data-testid="stCameraInputButton"]:hover {
+    background-color: #1a5cd4 !important;
+    box-shadow: 0 0 28px rgba(41, 121, 255, 0.7) !important;
+}
+[data-testid="stCameraInputButton"]:active {
+    background-color: #0f3fa8 !important;
+    transform: scale(0.97) !important;
+}
 .preview-label {
     font-size: 0.75rem;
     color: #7a90b8;
