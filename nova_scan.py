@@ -572,7 +572,11 @@ def afficher_canvas(img_pil, coins_initiales, prefix, sk_local):
         mx, my = wd * .08, hd * .08
         cd = [[mx, my], [wd - mx, my], [wd - mx, hd - my], [mx, hd - my]]
 
-    # Clé unique pour stocker les coins depuis le canvas
+    # Stocker sx/sy pour conversion coords display → originales au moment du clic
+    st.session_state[f"canvas_sx_{prefix}_{sk_local}"] = sx
+    st.session_state[f"canvas_sy_{prefix}_{sk_local}"] = sy
+
+    # Clé unique pour stocker les coins depuis le canvas (coords display)
     coins_json_key = f"canvas_coins_json_{prefix}_{sk_local}"
     if coins_json_key not in st.session_state:
         st.session_state[coins_json_key] = json.dumps(cd)
@@ -648,8 +652,9 @@ function hit(p){{
     if(Math.sqrt(dx*dx+dy*dy)<R*2.4)return i;}} return null;
 }}
 function sendCoins(){{
-  const real=coins.map(c=>[Math.round(c.x*SX),Math.round(c.y*SY)]);
-  const val=JSON.stringify(real);
+  // On stocke les coords DISPLAY (espace image réduite)
+  const disp=coins.map(c=>[Math.round(c.x),Math.round(c.y)]);
+  const val=JSON.stringify(disp);
   try{{
     const doc=window.parent.document;
     let inp=null;
@@ -787,16 +792,22 @@ def flux_image(img_pil, nom_pdf, prefix):
                 raw = st.session_state.get(coins_json_key, "")
                 try:
                     parsed = json.loads(raw)
-                    # Format [[x,y],...] depuis le canvas (coords display) → convertir en coords originales
-                    # Si c'est déjà en coords originales (list of lists) on garde
-                    if parsed and isinstance(parsed[0], list):
-                        st.session_state[corners_key] = parsed
+                    # parsed = [[x_disp, y_disp], ...] — convertir en coords originales
+                    # sx/sy = ratio original/display, stocké dans session
+                    sx_key = f"canvas_sx_{prefix}_{sk_local}"
+                    sy_key = f"canvas_sy_{prefix}_{sk_local}"
+                    sx_val = st.session_state.get(sx_key, 1.0)
+                    sy_val = st.session_state.get(sy_key, 1.0)
+                    if parsed and isinstance(parsed[0], list) and len(parsed) == 4:
+                        corners_orig = [[round(p[0] * sx_val), round(p[1] * sy_val)] for p in parsed]
+                        st.session_state[corners_key] = corners_orig
+                        st.session_state[badge_key] = "manual"
                     else:
                         st.session_state[corners_key] = coins
-                    st.session_state[badge_key]  = "manual"
+                        st.session_state[badge_key] = "auto"
                 except Exception:
                     st.session_state[corners_key] = coins
-                    st.session_state[badge_key]   = "auto"
+                    st.session_state[badge_key] = "auto"
                 st.session_state[state_key] = "result"
                 st.rerun()
 
