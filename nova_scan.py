@@ -70,21 +70,27 @@ html, body, [data-testid="stAppViewContainer"] {
     border-radius:20px; padding:4px 14px; font-size:0.72rem; color:#7a90b8; white-space:nowrap;
 }
 .step-active { background:rgba(41,121,255,0.3); border-color:#2979ff; color:#fff; font-weight:600; }
-/* Cacher le champ relay */
-div[data-testid="stTextInput"] { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="nova-title">📄 NOVA SCAN</div>', unsafe_allow_html=True)
 st.markdown('<div class="nova-subtitle">Numérisation instantanée · Zéro installation</div>', unsafe_allow_html=True)
 
+# ── Lire les query params au démarrage (relay JS → Python) ────────────────────
+qp = st.query_params
+relay_action = qp.get("nova_action", "")
+relay_data   = qp.get("nova_data",   "")
+
 # ── Reset ─────────────────────────────────────────────────────────────────────
 if st.session_state.get("reset_requested"):
     st.session_state["reset_requested"] = False
     st.session_state["scan_key"] = st.session_state.get("scan_key", 0) + 1
     for k in list(st.session_state.keys()):
-        if k.startswith(("state_", "corners_", "badge_", "_relay_")):
+        if k.startswith(("state_", "corners_", "badge_")):
             del st.session_state[k]
+    # Nettoyer les query params
+    st.query_params.clear()
+    st.rerun()
 
 if "scan_key" not in st.session_state:
     st.session_state["scan_key"] = 0
@@ -165,31 +171,29 @@ def image_vers_pdf(img):
 
 
 # ── Canvas interactif ─────────────────────────────────────────────────────────
-def canvas_recadrage(img_pil, coins_initiales, relay_input_key):
+def canvas_recadrage(img_pil, coins_initiales, prefix):
     """
-    Affiche le canvas avec 4 coins déplaçables.
-    Quand l'utilisateur confirme, le JS écrit dans le st.text_input
-    identifié par relay_input_key via manipulation DOM native Streamlit.
+    Affiche le canvas. Les boutons déclenchent une navigation vers
+    ?nova_action=CONFIRM&nova_data=[...coins...] ou ?nova_action=SKIP
+    que Streamlit capte au prochain rerun automatique.
     """
     import streamlit.components.v1 as components
 
-    # Redimensionner pour alléger le base64 (max 1200px)
-    img_display = img_pil.copy()
     max_dim = 1200
+    img_display = img_pil.copy()
     w_o, h_o = img_display.size
     if max(w_o, h_o) > max_dim:
         scale = max_dim / max(w_o, h_o)
         img_display = img_display.resize((int(w_o*scale), int(h_o*scale)), Image.LANCZOS)
 
     w_disp, h_disp = img_display.size
-    scale_x = w_o / w_disp  # pour reconvertir en coords originales
+    scale_x = w_o / w_disp
     scale_y = h_o / h_disp
 
     buf = io.BytesIO()
     img_display.save(buf, format="JPEG", quality=82)
     b64 = base64.b64encode(buf.getvalue()).decode()
 
-    # Coins en coords display
     if coins_initiales:
         coins_disp = [[c[0]/scale_x, c[1]/scale_y] for c in coins_initiales]
     else:
@@ -201,15 +205,12 @@ def canvas_recadrage(img_pil, coins_initiales, relay_input_key):
     coins_json = json.dumps(coins_disp)
     scales_json = json.dumps([scale_x, scale_y])
 
-    # Le JS va chercher l'input Streamlit par son data-testid aria-label
-    # On passe le relay_input_key pour qu'il trouve le bon champ
     html = f"""<!DOCTYPE html><html><head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{background:#050d1a;font-family:'Segoe UI',sans-serif;padding:2px;overflow:hidden}}
 #wrap{{position:relative;width:100%;max-width:600px;margin:0 auto}}
-#cvWrap{{position:relative;width:100%;}}
 canvas{{display:block;width:100%;border-radius:10px;touch-action:none;cursor:crosshair;}}
 .toolbar{{display:flex;gap:8px;margin-top:10px}}
 .btn{{flex:1;padding:14px 8px;border-radius:14px;font-size:.95rem;font-weight:700;
@@ -223,25 +224,22 @@ canvas{{display:block;width:100%;border-radius:10px;touch-action:none;cursor:cro
 #status{{text-align:center;font-size:.78rem;color:#00e676;margin-top:5px;min-height:1.2em}}
 </style></head><body>
 <div id="wrap">
-  <div id="cvWrap">
-    <canvas id="cv"></canvas>
-  </div>
+  <canvas id="cv"></canvas>
   <div class="toolbar">
     <button class="btn btn-skip" onclick="doSkip()">⏭ Sans recadrage</button>
-    <button class="btn btn-ok" onclick="doConfirm()">✓ Confirmer</button>
+    <button class="btn btn-ok"   onclick="doConfirm()">✓ Confirmer</button>
   </div>
   <div class="hint">Glissez les 4 coins 🔵 sur les bords du document</div>
   <div id="status"></div>
 </div>
 <script>
 const IW={w_disp}, IH={h_disp};
-const SCALES={scales_json};   // [sx, sy] pour reconvertir en coords originales
+const SCALES={scales_json};
 const COINS_INIT={coins_json};
-const RELAY_KEY='{relay_input_key}';
+const PREFIX='{prefix}';
 
 const cv=document.getElementById('cv');
 const ctx=cv.getContext('2d');
-// Taille interne = taille affichée (on travaille en coords display)
 cv.width=IW; cv.height=IH;
 
 const img=new Image();
@@ -252,20 +250,14 @@ const R=Math.max(20, Math.min(IW,IH)*0.042);
 
 img.onload=()=>draw();
 
-// ── Dessin ────────────────────────────────────────────────────────
 function draw(){{
   ctx.clearRect(0,0,IW,IH);
-
-  // 1. Image de fond
   ctx.drawImage(img,0,0);
 
-  // 2. Masque semi-transparent HORS zone sélectionnée
-  //    On utilise un canvas offscreen pour éviter le bug destination-out
   const offscreen=new OffscreenCanvas(IW,IH);
   const oc=offscreen.getContext('2d');
   oc.fillStyle='rgba(0,0,0,0.55)';
   oc.fillRect(0,0,IW,IH);
-  // Trouer la zone doc
   oc.globalCompositeOperation='destination-out';
   oc.beginPath();
   oc.moveTo(coins[0].x,coins[0].y);
@@ -275,7 +267,6 @@ function draw(){{
   oc.fill();
   ctx.drawImage(offscreen,0,0);
 
-  // 3. Contour bleu
   ctx.beginPath();
   ctx.moveTo(coins[0].x,coins[0].y);
   coins.forEach((c,i)=>{{if(i)ctx.lineTo(c.x,c.y)}});
@@ -284,22 +275,16 @@ function draw(){{
   ctx.lineWidth=Math.max(2.5,R*.12);
   ctx.stroke();
 
-  // 4. Poignées
   coins.forEach((c,i)=>{{
-    // Halo
     ctx.beginPath(); ctx.arc(c.x,c.y,R+6,0,Math.PI*2);
     ctx.fillStyle='rgba(0,0,0,.25)'; ctx.fill();
-    // Cercle
     ctx.beginPath(); ctx.arc(c.x,c.y,R,0,Math.PI*2);
-    const active=drag===i;
-    ctx.fillStyle=active?'#82b1ff':'#2979ff'; ctx.fill();
+    ctx.fillStyle=drag===i?'#82b1ff':'#2979ff'; ctx.fill();
     ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(2,R*.1); ctx.stroke();
-    // Croix
     const s=R*.38;
     ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=Math.max(1.5,R*.08);
     ctx.beginPath(); ctx.moveTo(c.x-s,c.y); ctx.lineTo(c.x+s,c.y); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(c.x,c.y-s); ctx.lineTo(c.x,c.y+s); ctx.stroke();
-    // Label coin
     const labels=['↖','↗','↘','↙'];
     ctx.fillStyle='rgba(255,255,255,.7)';
     ctx.font=`bold ${{Math.max(11,R*.45)}}px Segoe UI`;
@@ -308,7 +293,6 @@ function draw(){{
   }});
 }}
 
-// ── Coords canvas ─────────────────────────────────────────────────
 function gp(e){{
   const r=cv.getBoundingClientRect();
   const sx=IW/r.width, sy=IH/r.height;
@@ -333,56 +317,27 @@ cv.addEventListener('touchmove',e=>{{e.preventDefault();if(drag===null)return;co
 cv.addEventListener('mouseup',()=>{{drag=null;draw();}});
 cv.addEventListener('touchend',()=>{{drag=null;draw();}});
 
-// ── Écriture dans Streamlit via DOM ───────────────────────────────
-function writeRelay(value){{
-  // Cherche le bon input Streamlit (celui dont le label=RELAY_KEY)
-  // Streamlit génère un input[type=text] pour chaque st.text_input
-  try{{
-    const parent=window.parent.document;
-    // Cherche par aria-label ou par data-testid contenant la clé
-    let found=null;
-    const inputs=parent.querySelectorAll('input[type="text"]');
-    for(const inp of inputs){{
-      // Streamlit met le label comme aria-label sur certaines versions,
-      // ou on cherche le plus proche input vide / marqué relay
-      if(inp.getAttribute('aria-label')===RELAY_KEY || inp.dataset.novaRelay===RELAY_KEY){{
-        found=inp; break;
-      }}
-    }}
-    // Fallback : prendre le premier input text vide non marqué
-    if(!found){{
-      for(const inp of inputs){{
-        if(!inp.dataset.novaRelay){{
-          found=inp; break;
-        }}
-      }}
-    }}
-    if(!found){{ document.getElementById('status').textContent='⚠ Champ non trouvé'; return false; }}
-    found.dataset.novaRelay=RELAY_KEY;
-    const setter=Object.getOwnPropertyDescriptor(window.parent.HTMLInputElement.prototype,'value').set;
-    setter.call(found, value);
-    found.dispatchEvent(new Event('input',{{bubbles:true}}));
-    return true;
-  }}catch(err){{
-    document.getElementById('status').textContent='Erreur: '+err.message;
-    return false;
-  }}
+// ── Relay via query params (fiable cross-frame) ───────────────────
+function sendToStreamlit(action, data){{
+  document.getElementById('status').textContent='⏳ Traitement...';
+  const params=new URLSearchParams(window.parent.location.search);
+  params.set('nova_action', action);
+  params.set('nova_prefix', PREFIX);
+  if(data) params.set('nova_data', JSON.stringify(data));
+  else params.delete('nova_data');
+  window.parent.location.search = params.toString();
 }}
 
 function doConfirm(){{
-  // Reconvertir en coords image originale
   const result=coins.map(c=>[
     Math.round(c.x*SCALES[0]),
     Math.round(c.y*SCALES[1])
   ]);
-  document.getElementById('status').textContent='⏳ Application du recadrage...';
-  const ok=writeRelay('CONFIRM:'+JSON.stringify(result));
-  if(!ok) document.getElementById('status').textContent='⚠ Réessayez ou utilisez "Sans recadrage"';
+  sendToStreamlit('CONFIRM', result);
 }}
 
 function doSkip(){{
-  document.getElementById('status').textContent='⏳ Chargement...';
-  writeRelay('SKIP');
+  sendToStreamlit('SKIP', null);
 }}
 </script>
 </body></html>"""
@@ -436,10 +391,31 @@ def flux_image(img_pil, nom_pdf, prefix):
     state_key   = f"state_{prefix}"
     corners_key = f"corners_{prefix}"
     badge_key   = f"badge_{prefix}"
-    relay_key   = f"relay_{prefix}_{sk}"
 
     if state_key not in st.session_state:
         st.session_state[state_key] = "detecting"
+
+    # ── Intercepter les query params du relay JS ──
+    qp_action = st.query_params.get("nova_action", "")
+    qp_prefix = st.query_params.get("nova_prefix", "")
+    qp_data   = st.query_params.get("nova_data",   "")
+
+    if qp_action and qp_prefix == prefix and st.session_state.get(state_key) == "canvas":
+        if qp_action == "CONFIRM" and qp_data:
+            try:
+                corners_from_js = json.loads(qp_data)
+                st.session_state[corners_key] = corners_from_js
+                st.session_state[badge_key] = "manual"
+                st.session_state[state_key] = "result"
+                st.query_params.clear()
+                st.rerun()
+            except Exception as e:
+                st.error(f"Erreur recadrage : {e}")
+        elif qp_action == "SKIP":
+            st.session_state[badge_key] = "none"
+            st.session_state[state_key] = "result"
+            st.query_params.clear()
+            st.rerun()
 
     state = st.session_state[state_key]
 
@@ -471,30 +447,11 @@ def flux_image(img_pil, nom_pdf, prefix):
                 💡 Document non détecté. Placez les coins manuellement.</div>""",
                 unsafe_allow_html=True)
 
-        # Champ relay (caché par CSS)
-        relay_val = st.text_input("relay", key=relay_key, label_visibility="collapsed")
-
-        # Canvas
-        canvas_recadrage(img_pil, coins, relay_key)
-
-        # Traitement de la réponse du JS
-        if relay_val.startswith("CONFIRM:"):
-            try:
-                corners_from_js = json.loads(relay_val[8:])
-                st.session_state[corners_key] = corners_from_js
-                st.session_state[badge_key] = "manual"
-                st.session_state[state_key] = "result"
-                st.rerun()
-            except Exception as e:
-                st.error(f"Erreur recadrage : {e}")
-        elif relay_val == "SKIP":
-            st.session_state[badge_key] = "none"
-            st.session_state[state_key] = "result"
-            st.rerun()
+        canvas_recadrage(img_pil, coins, prefix)
 
     # ── RÉSULTAT ──
     elif state == "result":
-        badge  = st.session_state.get(badge_key, "none")
+        badge   = st.session_state.get(badge_key, "none")
         corners = st.session_state.get(corners_key)
 
         if badge == "none" or not corners:
