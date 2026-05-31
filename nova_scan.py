@@ -37,8 +37,30 @@ html,body,[data-testid="stAppViewContainer"]{
   font-family:'DM Sans',sans-serif;
 }
 [data-testid="stHeader"],[data-testid="stToolbar"],[data-testid="stDecoration"]{display:none!important}
-[data-testid="stFileUploader"]{display:none!important}
 div[data-testid="stTextInput"]{display:none!important}
+
+/* Cache uniquement le 1er uploader (onglet Caméra) */
+[data-testid="stFileUploader"]:first-of-type{display:none!important}
+
+/* Style de l'uploader Import */
+[data-testid="stFileUploader"]{
+  background:rgba(77,138,255,.06)!important;
+  border:1.5px dashed rgba(77,138,255,.4)!important;
+  border-radius:var(--radius)!important;
+  padding:.5rem!important;
+}
+[data-testid="stFileUploader"] section{border:none!important;background:transparent!important;padding:.5rem!important}
+[data-testid="stFileUploader"] label{color:var(--text)!important;font-weight:600!important;font-size:.9rem!important}
+[data-testid="stFileUploaderDropzoneInstructions"]{color:var(--muted)!important;font-size:.82rem!important}
+[data-testid="stFileUploaderDropzone"] button{
+  background:var(--blue-dim)!important;
+  border:1px solid var(--blue)!important;
+  color:#fff!important;
+  border-radius:10px!important;
+  font-weight:600!important;
+  padding:.5rem 1.2rem!important;
+  font-size:.85rem!important;
+}
 
 /* Remove default padding on mobile */
 .block-container{padding:1rem .8rem 2rem!important;max-width:480px!important}
