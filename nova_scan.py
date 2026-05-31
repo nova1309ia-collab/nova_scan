@@ -39,20 +39,20 @@ html,body,[data-testid="stAppViewContainer"]{
 [data-testid="stHeader"],[data-testid="stToolbar"],[data-testid="stDecoration"]{display:none!important}
 div[data-testid="stTextInput"]{display:none!important}
 
-/* Cache uniquement le 1er uploader (onglet Caméra) */
-[data-testid="stFileUploader"]:first-of-type{display:none!important}
+/* Cache tous les uploaders par défaut (onglet Caméra) */
+[data-testid="stFileUploader"]{display:none!important}
 
-/* Style de l'uploader Import */
-[data-testid="stFileUploader"]{
+/* Réactive uniquement l'uploader dans le wrapper import */
+.uploader-import [data-testid="stFileUploader"]{
+  display:block!important;
   background:rgba(77,138,255,.06)!important;
   border:1.5px dashed rgba(77,138,255,.4)!important;
   border-radius:var(--radius)!important;
   padding:.5rem!important;
 }
-[data-testid="stFileUploader"] section{border:none!important;background:transparent!important;padding:.5rem!important}
-[data-testid="stFileUploader"] label{color:var(--text)!important;font-weight:600!important;font-size:.9rem!important}
-[data-testid="stFileUploaderDropzoneInstructions"]{color:var(--muted)!important;font-size:.82rem!important}
-[data-testid="stFileUploaderDropzone"] button{
+.uploader-import [data-testid="stFileUploader"] section{border:none!important;background:transparent!important;padding:.5rem!important}
+.uploader-import [data-testid="stFileUploaderDropzoneInstructions"]{color:var(--muted)!important;font-size:.82rem!important}
+.uploader-import [data-testid="stFileUploaderDropzone"] button{
   background:var(--blue-dim)!important;
   border:1px solid var(--blue)!important;
   color:#fff!important;
@@ -689,8 +689,10 @@ with tab_mobile:
 
 with tab_import:
     st.markdown('<div class="tip-box">💡 <strong>Formats :</strong> JPG, PNG, WEBP, BMP</div>', unsafe_allow_html=True)
+    st.markdown('<div class="uploader-import">', unsafe_allow_html=True)
     fichier = st.file_uploader(label="Choisir une image", type=["jpg","jpeg","png","webp","bmp"],
                                 label_visibility="collapsed", key=f"upload_{sk}")
+    st.markdown('</div>', unsafe_allow_html=True)
     if fichier is not None:
         img_imp = corriger_orientation(Image.open(fichier))
         flux_image(img_imp, fichier.name.rsplit(".",1)[0]+".pdf", "imp")
