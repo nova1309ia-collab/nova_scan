@@ -356,6 +356,39 @@ div[data-testid="stTextInput"]{display:none!important}
   border: 1px solid rgba(124,58,237,.4);
   color: #c084fc;
 }
+.nova-app-card { flex-wrap: wrap; }
+.nova-app-card-top {
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+  width: 100%;
+}
+.nova-visit-btn {
+  display: block;
+  width: 100%;
+  margin-top: .75rem;
+  padding: .6rem 1rem;
+  border-radius: 10px;
+  font-family: 'Syne', sans-serif;
+  font-size: .82rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-align: center;
+  text-decoration: none !important;
+  transition: opacity .15s, transform .1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.nova-visit-btn:active { transform: scale(.97); opacity: .85; }
+.btn-visit-green {
+  background: linear-gradient(135deg, #00c853, #00897b);
+  color: #fff !important;
+  box-shadow: 0 3px 14px rgba(0,200,83,.35);
+}
+.btn-visit-violet {
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  color: #fff !important;
+  box-shadow: 0 3px 14px rgba(124,58,237,.35);
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -464,23 +497,27 @@ def afficher_bandeau_apps():
   <div class="nova-apps-banner-title">✦ Découvrez aussi nos autres apps Nova ✦</div>
   <div class="nova-apps-grid">
 
-    <a href="https://dawn-flower-c012.mypublic1309.workers.dev/" target="_blank" class="nova-app-card">
-      <div class="nova-app-icon icon-platform">🤖</div>
-      <div class="nova-app-body">
-        <div class="nova-app-name">Nova Platform</div>
-        <div class="nova-app-desc">Génère tes CV, exposés, rapports et documents scolaires grâce à l'IA — en quelques secondes.</div>
+    <div class="nova-app-card">
+      <div class="nova-app-card-top">
+        <div class="nova-app-icon icon-platform">🤖</div>
+        <div class="nova-app-body">
+          <div class="nova-app-name">Nova Platform <span class="nova-app-badge badge-free-green">GRATUIT</span></div>
+          <div class="nova-app-desc">Génère tes CV, exposés, rapports et documents scolaires grâce à l'IA — en quelques secondes.</div>
+        </div>
       </div>
-      <span class="nova-app-badge badge-free-green">GRATUIT</span>
-    </a>
+      <a href="https://dawn-flower-c012.mypublic1309.workers.dev/" target="_blank" class="nova-visit-btn btn-visit-green">🚀 Visiter Nova Platform →</a>
+    </div>
 
-    <a href="https://aged-term-0d2e.nova1309ia.workers.dev/" target="_blank" class="nova-app-card">
-      <div class="nova-app-icon icon-agency">🛠️</div>
-      <div class="nova-app-body">
-        <div class="nova-app-name">Nova Conception</div>
-        <div class="nova-app-desc">Crée ton site web ou ton application mobile professionnelle — sans coder, gratuitement.</div>
+    <div class="nova-app-card">
+      <div class="nova-app-card-top">
+        <div class="nova-app-icon icon-agency">🛠️</div>
+        <div class="nova-app-body">
+          <div class="nova-app-name">Nova Conception <span class="nova-app-badge badge-free-violet">GRATUIT</span></div>
+          <div class="nova-app-desc">Crée ton site web ou ton application mobile professionnelle — sans coder, gratuitement.</div>
+        </div>
       </div>
-      <span class="nova-app-badge badge-free-violet">GRATUIT</span>
-    </a>
+      <a href="https://aged-term-0d2e.nova1309ia.workers.dev/" target="_blank" class="nova-visit-btn btn-visit-violet">🌐 Visiter Nova Conception →</a>
+    </div>
 
   </div>
 </div>
