@@ -15,18 +15,18 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
 
 :root{
-  --bg:#050d1a;
-  --bg2:#08132b;
-  --blue:#2979ff;
-  --blue-dim:rgba(41,121,255,.18);
-  --blue-glow:rgba(41,121,255,.35);
+  --bg:#2a3d6b;
+  --bg2:#2f4475;
+  --blue:#4d8aff;
+  --blue-dim:rgba(77,138,255,.18);
+  --blue-glow:rgba(77,138,255,.35);
   --cyan:#00e5ff;
   --green:#00e676;
   --amber:#ffc107;
-  --text:#dce8ff;
-  --muted:#6a82a8;
-  --card:rgba(255,255,255,.03);
-  --border:rgba(41,121,255,.18);
+  --text:#e8eeff;
+  --muted:#8ba4cc;
+  --card:rgba(255,255,255,.05);
+  --border:rgba(77,138,255,.22);
   --radius:16px;
 }
 
