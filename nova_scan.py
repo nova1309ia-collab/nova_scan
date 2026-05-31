@@ -1,5 +1,5 @@
 import streamlit as st
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageFilter
 import io
 import numpy as np
 import base64
@@ -30,8 +30,19 @@ html,body,[data-testid="stAppViewContainer"]{background-color:#050d1a;color:#e0e
 .steps-row{display:flex;justify-content:center;gap:.5rem;margin-bottom:1.2rem;flex-wrap:wrap}
 .step-badge{background:rgba(41,121,255,.12);border:1px solid #2979ff44;border-radius:20px;padding:4px 14px;font-size:.72rem;color:#7a90b8;white-space:nowrap}
 .step-active{background:rgba(41,121,255,.3);border-color:#2979ff;color:#fff;font-weight:600}
-/* cacher les widgets relay */
 div[data-testid="stTextInput"]{display:none!important}
+/* Mode selector */
+.mode-row{display:flex;gap:8px;margin-bottom:1rem}
+.mode-btn{flex:1;padding:10px 6px;border-radius:12px;font-size:.8rem;font-weight:600;cursor:pointer;
+  border:1.5px solid #2979ff44;background:rgba(41,121,255,.07);color:#7a90b8;
+  font-family:'Segoe UI',sans-serif;transition:all .15s;text-align:center}
+.mode-btn.active{background:rgba(41,121,255,.25);border-color:#2979ff;color:#fff}
+[data-testid="stRadio"]>div{display:flex;gap:8px;flex-direction:row!important}
+[data-testid="stRadio"] label{flex:1;background:rgba(41,121,255,.07);border:1.5px solid #2979ff44;
+  border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer;font-size:.8rem;
+  font-weight:600;color:#7a90b8;transition:all .15s}
+[data-testid="stRadio"] label:has(input:checked){background:rgba(41,121,255,.25);border-color:#2979ff;color:#fff}
+[data-testid="stRadio"] input{display:none}
 </style>
 """, unsafe_allow_html=True)
 
@@ -45,13 +56,14 @@ sk = st.session_state["scan_key"]
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def corriger_orientation(img):
+    """Corrige l'orientation EXIF — appeler UNE SEULE FOIS à l'ouverture."""
     try:
         from PIL import ExifTags
         exif = img._getexif()
         if exif:
             for tag, val in exif.items():
                 if ExifTags.TAGS.get(tag) == "Orientation":
-                    rotations = {3:180,6:270,8:90}
+                    rotations = {3:180, 6:270, 8:90}
                     if val in rotations:
                         img = img.rotate(rotations[val], expand=True)
                     break
@@ -60,8 +72,9 @@ def corriger_orientation(img):
     return img
 
 def img_to_b64(img_pil):
+    """Sauvegarde en PNG lossless pour préserver les couleurs exactes."""
     buf = io.BytesIO()
-    img_pil.convert("RGB").save(buf, format="JPEG", quality=92)
+    img_pil.convert("RGB").save(buf, format="PNG")
     return base64.b64encode(buf.getvalue()).decode()
 
 def b64_to_img(s):
@@ -94,36 +107,54 @@ def detecter_contour_auto(img_pil):
     except:
         return None
 
-def recadrer_depuis_coins(img_pil, coins):
+def recadrer_depuis_coins(img_pil, coins, mode="couleur"):
+    """
+    Recadre la perspective et applique le traitement selon le mode :
+    - 'couleur'  : image couleur recadrée, légèrement améliorée
+    - 'gris'     : niveaux de gris, contraste amélioré
+    - 'nb'       : noir & blanc (binarisation adaptative) pour documents texte
+    """
     import cv2
     img_np = np.array(img_pil.convert("RGB"))
     pts = np.array(coins, dtype=np.float32)
     wA=np.linalg.norm(pts[2]-pts[3]); wB=np.linalg.norm(pts[1]-pts[0])
     hA=np.linalg.norm(pts[1]-pts[2]); hB=np.linalg.norm(pts[0]-pts[3])
     mW=int(max(wA,wB)); mH=int(max(hA,hB))
+    if mW < 10 or mH < 10:
+        return img_pil
     dst=np.array([[0,0],[mW-1,0],[mW-1,mH-1],[0,mH-1]],dtype=np.float32)
     M=cv2.getPerspectiveTransform(pts,dst)
     warped=cv2.warpPerspective(img_np,M,(mW,mH))
-    gray=cv2.cvtColor(warped,cv2.COLOR_RGB2GRAY)
-    clean=cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,21,10)
-    return Image.fromarray(clean).convert("RGB")
+
+    if mode == "nb":
+        gray=cv2.cvtColor(warped,cv2.COLOR_RGB2GRAY)
+        clean=cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,21,10)
+        return Image.fromarray(clean).convert("RGB")
+    elif mode == "gris":
+        gray=cv2.cvtColor(warped,cv2.COLOR_RGB2GRAY)
+        # Améliore le contraste
+        pil_gray = Image.fromarray(gray)
+        pil_gray = ImageEnhance.Contrast(pil_gray).enhance(1.4)
+        return pil_gray.convert("RGB")
+    else:  # couleur
+        pil_color = Image.fromarray(warped)
+        # Légère amélioration couleur
+        pil_color = ImageEnhance.Contrast(pil_color).enhance(1.2)
+        pil_color = ImageEnhance.Sharpness(pil_color).enhance(1.3)
+        return pil_color
 
 def image_vers_pdf(img):
-    img = corriger_orientation(img)
-    if img.mode != "RGB": img = img.convert("RGB")
+    """Convertit en PDF — PAS de correction EXIF ici (déjà faite à l'ouverture)."""
+    if img.mode != "RGB":
+        img = img.convert("RGB")
     buf = io.BytesIO()
     img.save(buf, format="PDF", resolution=150)
     buf.seek(0)
     return buf.getvalue(), img
 
 
-# ── Canvas + relay via st.text_input (valeur lue après rerun) ────────────────
+# ── Canvas interactif ─────────────────────────────────────────────────────────
 def canvas_et_relay(img_pil, coins_initiales, relay_key, prefix):
-    """
-    Affiche le canvas interactif.
-    Le JS écrit directement dans le st.text_input caché via la technique
-    React fiber (setter natif), puis simule Enter pour forcer le rerun.
-    """
     import streamlit.components.v1 as components
 
     max_dim = 1200
@@ -146,8 +177,6 @@ def canvas_et_relay(img_pil, coins_initiales, relay_key, prefix):
         mx,my = wd*.08, hd*.08
         cd = [[mx,my],[wd-mx,my],[wd-mx,hd-my],[mx,hd-my]]
 
-    # Le widget st.text_input doit être créé AVANT le composant HTML
-    # pour que Streamlit lui assigne un ID DOM qu'on peut trouver
     relay_val = st.text_input("_relay_", key=relay_key, label_visibility="collapsed")
 
     html = f"""<!DOCTYPE html><html><head>
@@ -179,8 +208,6 @@ canvas{{display:block;width:100%;border-radius:10px;touch-action:none;cursor:cro
 <script>
 const IW={wd},IH={hd},SX={sx},SY={sy};
 const COINS_INIT={json.dumps(cd)};
-const RELAY_KEY='{relay_key}';
-
 const cv=document.getElementById('cv');
 const ctx=cv.getContext('2d');
 cv.width=IW; cv.height=IH;
@@ -236,29 +263,22 @@ cv.addEventListener('touchmove',e=>{{e.preventDefault();if(drag===null)return;co
 cv.addEventListener('mouseup',()=>{{drag=null;draw();}});
 cv.addEventListener('touchend',()=>{{drag=null;draw();}});
 
-// ── Envoi vers Streamlit via React fiber setter + Enter ───────────
 function sendRelay(value){{
   document.getElementById('status').textContent='⏳ Traitement en cours...';
   try{{
     const doc=window.parent.document;
-    // Cherche l'input par aria-label = "_relay_" (Streamlit l'utilise comme aria-label)
     let inp=null;
     for(const el of doc.querySelectorAll('input[type="text"]')){{
       if(el.getAttribute('aria-label')==='_relay_'){{inp=el;break;}}
     }}
     if(!inp){{
-      // Fallback: dernier input texte visible (normalement le nôtre caché par CSS)
       const all=[...doc.querySelectorAll('input[type="text"]')];
       inp=all[all.length-1];
     }}
     if(!inp){{document.getElementById('status').textContent='⚠ Champ introuvable';return;}}
-
-    // Utilise le setter React fiber pour mettre la valeur
     const setter=Object.getOwnPropertyDescriptor(window.parent.HTMLInputElement.prototype,'value').set;
     setter.call(inp,value);
     inp.dispatchEvent(new Event('input',{{bubbles:true}}));
-
-    // Simule Entrée pour soumettre et déclencher le rerun Streamlit
     inp.dispatchEvent(new KeyboardEvent('keydown',{{key:'Enter',code:'Enter',keyCode:13,which:13,bubbles:true}}));
     inp.dispatchEvent(new KeyboardEvent('keypress',{{key:'Enter',code:'Enter',keyCode:13,which:13,bubbles:true}}));
     inp.dispatchEvent(new KeyboardEvent('keyup',{{key:'Enter',code:'Enter',keyCode:13,which:13,bubbles:true}}));
@@ -266,7 +286,6 @@ function sendRelay(value){{
     document.getElementById('status').textContent='Erreur: '+err.message;
   }}
 }}
-
 function doConfirm(){{
   const result=coins.map(c=>[Math.round(c.x*SX),Math.round(c.y*SY)]);
   sendRelay('CONFIRM:'+JSON.stringify(result));
@@ -308,7 +327,7 @@ def afficher_resultat(img, nom_fichier, badge_mode, key_dl, key_btn):
     st.markdown('<hr class="sep">', unsafe_allow_html=True)
     if st.button("🔄  Scanner un autre document", key=key_btn):
         for k in list(st.session_state.keys()):
-            if k.startswith(("state_","corners_","badge_","img_b64_","nom_pdf_")):
+            if k.startswith(("state_","corners_","badge_","img_b64_","nom_pdf_","mode_")):
                 del st.session_state[k]
         st.session_state["scan_key"] = sk+1
         st.rerun()
@@ -322,9 +341,10 @@ def flux_image(img_pil, nom_pdf, prefix):
     badge_key   = f"badge_{prefix}"
     img_b64_key = f"img_b64_{prefix}"
     nom_key     = f"nom_pdf_{prefix}"
+    mode_key    = f"mode_{prefix}"
     relay_key   = f"_relay_{prefix}_{sk_local}"
 
-    # Persister l'image dès le premier passage
+    # Persister l'image UNE SEULE FOIS en PNG lossless
     if img_b64_key not in st.session_state:
         st.session_state[img_b64_key] = img_to_b64(img_pil)
         st.session_state[nom_key] = nom_pdf
@@ -332,7 +352,7 @@ def flux_image(img_pil, nom_pdf, prefix):
     if state_key not in st.session_state:
         st.session_state[state_key] = "detecting"
 
-    # Toujours recharger l'image depuis la session
+    # Recharger depuis la session (résiste aux reruns)
     img_pil = b64_to_img(st.session_state[img_b64_key])
     nom_pdf = st.session_state[nom_key]
     state   = st.session_state[state_key]
@@ -363,9 +383,17 @@ def flux_image(img_pil, nom_pdf, prefix):
             st.markdown('<div class="tip-box">💡 Document non détecté. Placez les coins manuellement.</div>',
                         unsafe_allow_html=True)
 
+        # Choix du mode de rendu
+        st.markdown("<div style='font-size:.78rem;color:#7a90b8;margin-bottom:.4rem;'>Mode de rendu :</div>",
+                    unsafe_allow_html=True)
+        mode = st.radio("Mode", ["🎨 Couleur", "🌫️ Niveaux de gris", "📄 Noir & Blanc"],
+                        horizontal=True, key=f"mode_radio_{prefix}_{sk_local}",
+                        label_visibility="collapsed")
+        mode_map = {"🎨 Couleur": "couleur", "🌫️ Niveaux de gris": "gris", "📄 Noir & Blanc": "nb"}
+        st.session_state[mode_key] = mode_map[mode]
+
         relay_val = canvas_et_relay(img_pil, coins, relay_key, prefix)
 
-        # Traitement de la réponse
         if relay_val:
             if relay_val.startswith("CONFIRM:"):
                 try:
@@ -385,15 +413,16 @@ def flux_image(img_pil, nom_pdf, prefix):
     elif state == "result":
         badge   = st.session_state.get(badge_key, "none")
         corners = st.session_state.get(corners_key)
+        mode    = st.session_state.get(mode_key, "couleur")
 
         if badge == "none" or not corners:
             img_finale = img_pil
         else:
             try:
-                img_finale = recadrer_depuis_coins(img_pil, corners)
-            except Exception:
+                img_finale = recadrer_depuis_coins(img_pil, corners, mode)
+            except Exception as e:
                 img_finale = img_pil
-                st.warning("Recadrage impossible, image originale utilisée.")
+                st.warning(f"Recadrage impossible, image originale utilisée. ({e})")
 
         afficher_resultat(img_finale, nom_pdf, badge,
                           key_dl=f"dl_{prefix}_{sk_local}",
@@ -434,7 +463,7 @@ with tab_mobile:
           const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
           inp.setAttribute('capture','environment');inp.click();
         }
-        </script>""", height=320, scrolling=False)
+        </script>""", height=300, scrolling=False)
     else:
         img_mob = corriger_orientation(Image.open(photo))
         flux_image(img_mob, "nova_scan_document.pdf", "mob")
