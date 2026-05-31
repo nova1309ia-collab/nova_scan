@@ -224,79 +224,109 @@ def afficher_resultat(raw_file_or_image, nom_fichier, key_dl, key_btn, is_pil=Fa
 
 
 # ── ONGLETS ───────────────────────────────────────────────────────────────────
-tab_mobile, tab_cam, tab_import = st.tabs([
-    "📱  Mobile",
-    "🖥️  Caméra PC",
+tab_mobile, tab_import = st.tabs([
+    "📷  Caméra",
     "🖼️  Importer"
 ])
 
 
 # ══════════════════════════════════
-# ONGLET 1 — MOBILE
+# ONGLET 1 — CAMÉRA MOBILE
 # ══════════════════════════════════
 with tab_mobile:
-    st.markdown("""
-    <div class="tip-box">
-        💡 Appuie sur <strong>Parcourir</strong> puis choisis
-        <strong>Appareil photo</strong> pour scanner directement,
-        ou sélectionne une photo déjà prise dans ta galerie.
-    </div>
-    """, unsafe_allow_html=True)
 
-    mob_file = st.file_uploader(
-        label="📷  Ouvrir l'appareil photo ou la galerie",
-        type=["jpg", "jpeg", "png", "webp", "bmp", "heic", "heif"],
-        key=f"mob_{sk}",
-    )
+    # Récupération base64 envoyé par le composant HTML
+    b64_key = f"img_b64_{sk}"
+    b64_val = st.query_params.get(b64_key, None)
 
-    if mob_file is None:
+    # Champ texte caché — reçoit le base64 via JS
+    b64_input = st.text_input("b64", key=b64_key, label_visibility="collapsed")
+
+    if not b64_input:
+        import streamlit.components.v1 as components
+        components.html(f"""
+        <style>
+            body {{ margin:0; background:transparent; }}
+            #cam-input {{ display:none; }}
+            .scan-btn {{
+                display: block;
+                width: 100%;
+                background: linear-gradient(135deg, #2979ff, #1a5cd4);
+                color: #fff;
+                border: none;
+                border-radius: 16px;
+                padding: 1.2rem;
+                font-size: 1.15rem;
+                font-weight: 700;
+                letter-spacing: 1px;
+                cursor: pointer;
+                box-shadow: 0 4px 24px rgba(41,121,255,0.5);
+                font-family: 'Segoe UI', sans-serif;
+                text-align: center;
+            }}
+            .scan-btn:active {{ opacity: 0.85; transform: scale(0.98); }}
+            .hint {{
+                text-align: center;
+                font-size: 0.78rem;
+                color: #7a90b8;
+                margin-top: 0.8rem;
+                font-family: 'Segoe UI', sans-serif;
+            }}
+        </style>
+
+        <label for="cam-input">
+            <div class="scan-btn">📷 &nbsp; Scanner un document</div>
+        </label>
+        <input id="cam-input" type="file" accept="image/*" capture="environment"
+               onchange="handlePhoto(this)">
+        <div class="hint">Ouvre directement l'appareil photo</div>
+
+        <script>
+        function handlePhoto(input) {{
+            if (!input.files || !input.files[0]) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {{
+                const b64 = e.target.result; // data:image/...;base64,...
+                // Envoyer vers Streamlit via le champ texte caché
+                const stInputs = window.parent.document.querySelectorAll('input[type="text"]');
+                for (let inp of stInputs) {{
+                    if (inp.value === '' || inp.getAttribute('aria-label') === 'b64') {{
+                        inp.value = b64;
+                        inp.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        break;
+                    }}
+                }}
+            }};
+            reader.readAsDataURL(input.files[0]);
+        }}
+        </script>
+        """, height=130, scrolling=False)
+
         st.markdown("""
-        <div class="steps-row">
-            <div class="step-badge step-active">① Prendre / choisir</div>
+        <div class="steps-row" style="margin-top:1rem;">
+            <div class="step-badge step-active">① Scanner</div>
             <div class="step-badge">② Générer</div>
             <div class="step-badge">③ Télécharger</div>
         </div>
         """, unsafe_allow_html=True)
+
     else:
-        img_mob = Image.open(mob_file)
-        afficher_resultat(img_mob, "nova_scan_mobile.pdf", "dl_mob", "btn_reset_mob", is_pil=True)
+        # Décoder le base64 reçu
+        try:
+            import base64, re
+            header, data = b64_input.split(",", 1)
+            img_bytes = base64.b64decode(data)
+            img_mob = Image.open(io.BytesIO(img_bytes))
+            afficher_resultat(img_mob, "nova_scan_document.pdf", "dl_mob", "btn_reset_mob", is_pil=True)
+        except Exception as e:
+            st.error(f"Erreur lecture image : {e}")
+            if st.button("🔄 Réessayer", key="btn_retry_mob"):
+                st.session_state["reset_requested"] = True
+                st.rerun()
 
 
 # ══════════════════════════════════
-# ONGLET 2 — CAMÉRA PC
-# ══════════════════════════════════
-with tab_cam:
-    st.markdown("""
-    <div class="tip-box">
-        💡 Cet onglet utilise la webcam. <strong>Sur PC uniquement.</strong>
-        Sur mobile, utilise l'onglet <strong>📱 Mobile</strong>.
-    </div>
-    """, unsafe_allow_html=True)
-
-    photo = st.camera_input(
-        label="Prendre la photo",
-        label_visibility="collapsed",
-        key=f"cam_{sk}",
-    )
-
-    if photo is None:
-        st.markdown("""
-        <div class="steps-row">
-            <div class="step-badge step-active">① Cadrer</div>
-            <div class="step-badge">② Capturer</div>
-            <div class="step-badge">③ Télécharger</div>
-        </div>
-        <div class="guide-box">
-            <div class="guide-text">📐 ALIGNE TON DOCUMENT DANS CE CADRE</div>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        img_cam = Image.open(io.BytesIO(photo.getvalue()))
-        afficher_resultat(img_cam, "nova_scan_document.pdf", "dl_cam", "btn_reset_cam", is_pil=True)
-
-
-# ══════════════════════════════════
-# ONGLET 3 — IMPORT FICHIER
+# ONGLET 2 — IMPORT FICHIER
 # ══════════════════════════════════
 with tab_import:
     st.markdown("""
