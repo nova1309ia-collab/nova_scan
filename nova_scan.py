@@ -547,74 +547,71 @@ body{background:transparent;font-family:'DM Sans',sans-serif;padding:0}
 </body></html>""", height=320, scrolling=False)
 
 
-# ── Canvas interactif ─────────────────────────────────────────────────────────
-def canvas_et_relay(img_pil, coins_initiales, relay_key, prefix):
+# ── Canvas interactif (affichage uniquement — boutons Streamlit natifs) ──────
+def afficher_canvas(img_pil, coins_initiales, prefix, sk_local):
+    """Affiche le canvas dans un components.html. Stocke les coins via une
+    hidden text_input mise à jour par postMessage → st.session_state."""
     import streamlit.components.v1 as components
 
-    max_dim = 1200
+    max_dim = 900
     img_d = img_pil.copy()
     w_o, h_o = img_d.size
-    if max(w_o,h_o) > max_dim:
-        sc = max_dim/max(w_o,h_o)
-        img_d = img_d.resize((int(w_o*sc),int(h_o*sc)), Image.LANCZOS)
-
+    if max(w_o, h_o) > max_dim:
+        sc = max_dim / max(w_o, h_o)
+        img_d = img_d.resize((int(w_o * sc), int(h_o * sc)), Image.LANCZOS)
     wd, hd = img_d.size
-    sx, sy = w_o/wd, h_o/hd
+    sx, sy = w_o / wd, h_o / hd
 
     buf = io.BytesIO()
-    img_d.save(buf, format="JPEG", quality=80)
+    img_d.save(buf, format="JPEG", quality=75)
     b64 = base64.b64encode(buf.getvalue()).decode()
 
     if coins_initiales:
-        cd = [[c[0]/sx, c[1]/sy] for c in coins_initiales]
+        cd = [[c[0] / sx, c[1] / sy] for c in coins_initiales]
     else:
-        mx,my = wd*.08, hd*.08
-        cd = [[mx,my],[wd-mx,my],[wd-mx,hd-my],[mx,hd-my]]
+        mx, my = wd * .08, hd * .08
+        cd = [[mx, my], [wd - mx, my], [wd - mx, hd - my], [mx, hd - my]]
 
-    relay_val = st.text_input("_relay_", key=relay_key, label_visibility="collapsed")
+    # Clé unique pour stocker les coins depuis le canvas
+    coins_json_key = f"canvas_coins_json_{prefix}_{sk_local}"
+    if coins_json_key not in st.session_state:
+        st.session_state[coins_json_key] = json.dumps(cd)
+
+    # Text input caché qui reçoit la valeur JSON des coins via JS
+    relay_key = f"relay_coins_{prefix}_{sk_local}"
+    relay_val = st.text_input("_coins_", key=relay_key, label_visibility="collapsed",
+                               value=st.session_state[coins_json_key])
+
+    # Mettre à jour session si le relay a changé
+    if relay_val and relay_val != st.session_state.get(coins_json_key):
+        st.session_state[coins_json_key] = relay_val
 
     html = f"""<!DOCTYPE html><html><head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{background:#050d1a;font-family:'Segoe UI',sans-serif;padding:2px}}
-#wrap{{width:100%;max-width:600px;margin:0 auto}}
+body{{background:#050d1a;padding:2px;font-family:'Segoe UI',sans-serif}}
 canvas{{display:block;width:100%;border-radius:10px;touch-action:none;cursor:crosshair}}
-.toolbar{{display:flex;gap:8px;margin-top:10px}}
-.btn{{flex:1;padding:14px 8px;border-radius:14px;font-size:.95rem;font-weight:700;
-      cursor:pointer;border:none;font-family:'Segoe UI',sans-serif;
-      -webkit-tap-highlight-color:transparent;transition:transform .1s,opacity .1s}}
-.btn:active{{transform:scale(.97);opacity:.85}}
-.btn-ok{{background:linear-gradient(135deg,#2979ff,#1565c0);color:#fff;box-shadow:0 4px 18px rgba(41,121,255,.5)}}
-.btn-skip{{background:rgba(255,255,255,.06);border:1px solid #2979ff44!important;color:#7a90b8}}
-.hint{{text-align:center;font-size:.75rem;color:#4a6080;margin-top:7px}}
-#status{{text-align:center;font-size:.82rem;color:#00e676;margin-top:6px;min-height:1.4em;font-weight:600}}
+.hint{{text-align:center;font-size:.73rem;color:#3a5070;margin-top:6px}}
 </style></head><body>
-<div id="wrap">
-  <canvas id="cv"></canvas>
-  <div class="toolbar">
-    <button class="btn btn-skip" onclick="doSkip()">⏭ Sans recadrage</button>
-    <button class="btn btn-ok"   onclick="doConfirm()">✓ Confirmer</button>
-  </div>
-  <div class="hint">Glissez les 4 coins 🔵 sur les bords du document</div>
-  <div id="status"></div>
-</div>
+<canvas id="cv"></canvas>
+<div class="hint">Glissez les 4 coins 🔵 sur les bords du document</div>
 <script>
 const IW={wd},IH={hd},SX={sx},SY={sy};
-const COINS_INIT={json.dumps(cd)};
+const INIT={json.dumps(cd)};
 const cv=document.getElementById('cv');
 const ctx=cv.getContext('2d');
 cv.width=IW; cv.height=IH;
 const img=new Image(); img.src='data:image/jpeg;base64,{b64}';
-let coins=COINS_INIT.map(c=>({{x:c[0],y:c[1]}}));
+let coins=INIT.map(c=>({{x:c[0],y:c[1]}}));
 let drag=null;
-const R=Math.max(20,Math.min(IW,IH)*.042);
+const R=Math.max(18,Math.min(IW,IH)*.045);
 img.onload=()=>draw();
 
 function draw(){{
   ctx.clearRect(0,0,IW,IH); ctx.drawImage(img,0,0);
   const off=new OffscreenCanvas(IW,IH),oc=off.getContext('2d');
-  oc.fillStyle='rgba(0,0,0,.55)'; oc.fillRect(0,0,IW,IH);
+  oc.fillStyle='rgba(0,0,0,.5)'; oc.fillRect(0,0,IW,IH);
   oc.globalCompositeOperation='destination-out';
   oc.beginPath(); oc.moveTo(coins[0].x,coins[0].y);
   coins.forEach((c,i)=>{{if(i)oc.lineTo(c.x,c.y)}}); oc.closePath();
@@ -622,20 +619,20 @@ function draw(){{
   ctx.drawImage(off,0,0);
   ctx.beginPath(); ctx.moveTo(coins[0].x,coins[0].y);
   coins.forEach((c,i)=>{{if(i)ctx.lineTo(c.x,c.y)}}); ctx.closePath();
-  ctx.strokeStyle='#2979ff'; ctx.lineWidth=Math.max(2.5,R*.12); ctx.stroke();
+  ctx.strokeStyle='#2979ff'; ctx.lineWidth=Math.max(2,R*.1); ctx.stroke();
   const lbl=['↖','↗','↘','↙'];
   coins.forEach((c,i)=>{{
-    ctx.beginPath(); ctx.arc(c.x,c.y,R+6,0,Math.PI*2);
-    ctx.fillStyle='rgba(0,0,0,.25)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(c.x,c.y,R+5,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,0,0,.2)'; ctx.fill();
     ctx.beginPath(); ctx.arc(c.x,c.y,R,0,Math.PI*2);
     ctx.fillStyle=drag===i?'#82b1ff':'#2979ff'; ctx.fill();
     ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(2,R*.1); ctx.stroke();
-    const s=R*.38;
-    ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=Math.max(1.5,R*.08);
+    const s=R*.35;
+    ctx.strokeStyle='rgba(255,255,255,.8)'; ctx.lineWidth=Math.max(1.5,R*.07);
     ctx.beginPath(); ctx.moveTo(c.x-s,c.y); ctx.lineTo(c.x+s,c.y); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(c.x,c.y-s); ctx.lineTo(c.x,c.y+s); ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,.7)';
-    ctx.font=`bold ${{Math.max(11,R*.45)}}px Segoe UI`;
+    ctx.fillStyle='rgba(255,255,255,.8)';
+    ctx.font=`bold ${{Math.max(10,R*.4)}}px Segoe UI`;
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(lbl[i],c.x,c.y);
   }});
@@ -647,48 +644,34 @@ function gp(e){{
           y:Math.max(0,Math.min(IH,(s.clientY-r.top)*sy2))}};
 }}
 function hit(p){{
-  for(let i=0;i<4;i++){{const dx=p.x-coins[i].x,dy=p.y-coins[i].y;if(Math.sqrt(dx*dx+dy*dy)<R*2.2)return i;}}
-  return null;
+  for(let i=0;i<4;i++){{const dx=p.x-coins[i].x,dy=p.y-coins[i].y;
+    if(Math.sqrt(dx*dx+dy*dy)<R*2.4)return i;}} return null;
+}}
+function sendCoins(){{
+  const real=coins.map(c=>[Math.round(c.x*SX),Math.round(c.y*SY)]);
+  const val=JSON.stringify(real);
+  try{{
+    const doc=window.parent.document;
+    let inp=null;
+    for(const el of doc.querySelectorAll('input[type="text"]')){{
+      if(el.getAttribute('aria-label')=='_coins_'){{inp=el;break;}}
+    }}
+    if(!inp)return;
+    Object.getOwnPropertyDescriptor(window.parent.HTMLInputElement.prototype,'value')
+      .set.call(inp,val);
+    inp.dispatchEvent(new Event('input',{{bubbles:true}}));
+  }}catch(e){{}}
 }}
 cv.addEventListener('mousedown',e=>{{e.preventDefault();drag=hit(gp(e));draw();}});
 cv.addEventListener('touchstart',e=>{{e.preventDefault();drag=hit(gp(e));draw();}},{{passive:false}});
 cv.addEventListener('mousemove',e=>{{if(drag===null)return;coins[drag]=gp(e);draw();}});
 cv.addEventListener('touchmove',e=>{{e.preventDefault();if(drag===null)return;coins[drag]=gp(e);draw();}},{{passive:false}});
-cv.addEventListener('mouseup',()=>{{drag=null;draw();}});
-cv.addEventListener('touchend',()=>{{drag=null;draw();}});
-
-function sendRelay(value){{
-  document.getElementById('status').textContent='⏳ Traitement en cours...';
-  try{{
-    const doc=window.parent.document;
-    let inp=null;
-    for(const el of doc.querySelectorAll('input[type="text"]')){{
-      if(el.getAttribute('aria-label')==='_relay_'){{inp=el;break;}}
-    }}
-    if(!inp){{
-      const all=[...doc.querySelectorAll('input[type="text"]')];
-      inp=all[all.length-1];
-    }}
-    if(!inp){{document.getElementById('status').textContent='⚠ Champ introuvable';return;}}
-    const setter=Object.getOwnPropertyDescriptor(window.parent.HTMLInputElement.prototype,'value').set;
-    setter.call(inp,value);
-    inp.dispatchEvent(new Event('input',{{bubbles:true}}));
-    inp.dispatchEvent(new KeyboardEvent('keydown',{{key:'Enter',code:'Enter',keyCode:13,which:13,bubbles:true}}));
-    inp.dispatchEvent(new KeyboardEvent('keypress',{{key:'Enter',code:'Enter',keyCode:13,which:13,bubbles:true}}));
-    inp.dispatchEvent(new KeyboardEvent('keyup',{{key:'Enter',code:'Enter',keyCode:13,which:13,bubbles:true}}));
-  }}catch(err){{
-    document.getElementById('status').textContent='Erreur: '+err.message;
-  }}
-}}
-function doConfirm(){{
-  const result=coins.map(c=>[Math.round(c.x*SX),Math.round(c.y*SY)]);
-  sendRelay('CONFIRM:'+JSON.stringify(result));
-}}
-function doSkip(){{sendRelay('SKIP');}}
+cv.addEventListener('mouseup',()=>{{drag=null;sendCoins();draw();}});
+cv.addEventListener('touchend',()=>{{drag=null;sendCoins();draw();}});
 </script></body></html>"""
 
-    components.html(html, height=680, scrolling=False)
-    return relay_val
+    components.html(html, height=int(hd * 320 / wd) + 40, scrolling=False)
+    return coins_json_key
 
 
 # ── Affichage résultat ────────────────────────────────────────────────────────
@@ -773,12 +756,14 @@ def flux_image(img_pil, nom_pdf, prefix):
         if coins:
             st.markdown("""<div style="background:rgba(0,230,118,.07);border:1px solid #00e67644;
                 border-radius:10px;padding:.55rem 1rem;font-size:.78rem;color:#00e676;
-                margin-bottom:.7rem;text-align:center;">
-                ✂️ Document détecté — ajustez les coins si besoin</div>""", unsafe_allow_html=True)
+                margin-bottom:.6rem;text-align:center;">
+                ✂️ Document détecté — glissez les coins bleus pour ajuster</div>""",
+                unsafe_allow_html=True)
         else:
-            st.markdown('<div class="tip-box">💡 Document non détecté. Placez les coins manuellement.</div>',
+            st.markdown('<div class="tip-box">💡 Document non détecté — placez les 4 coins manuellement.</div>',
                         unsafe_allow_html=True)
 
+        # Mode de rendu
         st.markdown("<div style='font-size:.78rem;color:#7a90b8;margin-bottom:.4rem;'>Mode de rendu :</div>",
                     unsafe_allow_html=True)
         mode = st.radio("Mode", ["🎨 Couleur", "🌫️ Niveaux de gris", "📄 Noir & Blanc"],
@@ -787,20 +772,31 @@ def flux_image(img_pil, nom_pdf, prefix):
         mode_map = {"🎨 Couleur": "couleur", "🌫️ Niveaux de gris": "gris", "📄 Noir & Blanc": "nb"}
         st.session_state[mode_key] = mode_map[mode]
 
-        relay_val = canvas_et_relay(img_pil, coins, relay_key, prefix)
+        # Afficher canvas — retourne la clé session où les coins JSON sont stockés
+        coins_json_key = afficher_canvas(img_pil, coins, prefix, sk_local)
 
-        if relay_val:
-            if relay_val.startswith("CONFIRM:"):
+        # Boutons Streamlit natifs (fiables sur mobile)
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("⏭ Sans recadrage", key=f"skip_{prefix}_{sk_local}", use_container_width=True):
+                st.session_state[badge_key]  = "none"
+                st.session_state[state_key]  = "result"
+                st.rerun()
+        with col2:
+            if st.button("✅ Recadrer & Générer PDF", key=f"confirm_{prefix}_{sk_local}", use_container_width=True):
+                raw = st.session_state.get(coins_json_key, "")
                 try:
-                    corners_js = json.loads(relay_val[8:])
-                    st.session_state[corners_key] = corners_js
-                    st.session_state[badge_key]   = "manual"
-                    st.session_state[state_key]   = "result"
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Erreur recadrage : {e}")
-            elif relay_val == "SKIP":
-                st.session_state[badge_key] = "none"
+                    parsed = json.loads(raw)
+                    # Format [[x,y],...] depuis le canvas (coords display) → convertir en coords originales
+                    # Si c'est déjà en coords originales (list of lists) on garde
+                    if parsed and isinstance(parsed[0], list):
+                        st.session_state[corners_key] = parsed
+                    else:
+                        st.session_state[corners_key] = coins
+                    st.session_state[badge_key]  = "manual"
+                except Exception:
+                    st.session_state[corners_key] = coins
+                    st.session_state[badge_key]   = "auto"
                 st.session_state[state_key] = "result"
                 st.rerun()
 
