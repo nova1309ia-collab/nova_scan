@@ -832,33 +832,83 @@ with tab_mobile:
                               label_visibility="collapsed", key=f"cam_{sk}")
     if photo is None:
         import streamlit.components.v1 as components
-        components.html("""<style>
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{background:transparent;font-family:'Segoe UI',sans-serif}
-        .card{background:rgba(41,121,255,.07);border:1.5px dashed #2979ff88;border-radius:18px;padding:1.4rem 1rem;margin-bottom:1rem;text-align:center}
-        .icon{font-size:3.5rem;display:block;margin-bottom:.5rem;animation:pulse 2s infinite}
-        @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-        .title{font-size:1.05rem;font-weight:700;color:#fff;margin-bottom:.5rem}
-        .tip{font-size:.82rem;color:#a0b4d0;margin:.25rem 0}
-        .big-btn{display:block;width:100%;background:linear-gradient(135deg,#2979ff,#1a5cd4);
-          color:#fff;border:none;border-radius:16px;padding:1.1rem;font-size:1.15rem;font-weight:700;
-          cursor:pointer;box-shadow:0 4px 24px rgba(41,121,255,.55);font-family:'Segoe UI',sans-serif;
-          -webkit-tap-highlight-color:transparent;margin-bottom:.8rem}
-        </style>
-        <div class="card">
-          <span class="icon">📷</span>
-          <div class="title">Photographiez votre document</div>
-          <div class="tip">💡 Fond contrasté · ☀️ Bonne lumière · 📐 4 coins visibles</div>
+        components.html("""<!DOCTYPE html><html><head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:transparent;font-family:'DM Sans',sans-serif}
+.cam-card{background:rgba(41,121,255,.07);border:1.5px dashed #2979ff88;border-radius:18px;padding:1.3rem 1rem;margin-bottom:.9rem;text-align:center}
+.cam-icon{font-size:3.2rem;display:block;margin-bottom:.45rem;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.cam-title{font-size:1rem;font-weight:700;color:#fff;margin-bottom:.4rem;font-family:'Syne',sans-serif}
+.cam-tip{font-size:.78rem;color:#a0b4d0;margin:.2rem 0}
+.big-btn{display:block;width:100%;background:linear-gradient(135deg,#2979ff,#1a5cd4);
+  color:#fff;border:none;border-radius:16px;padding:1rem;font-size:1.05rem;font-weight:700;
+  cursor:pointer;box-shadow:0 4px 24px rgba(41,121,255,.55);font-family:'Syne',sans-serif;
+  -webkit-tap-highlight-color:transparent;margin-bottom:.9rem;letter-spacing:.5px}
+.sep{border:none;border-top:1px solid rgba(41,121,255,.12);margin:.9rem 0}
+.banner{background:linear-gradient(135deg,rgba(15,25,60,.97) 0%,rgba(20,35,80,.97) 100%);border:1px solid rgba(77,138,255,.3);border-radius:20px;padding:1rem .9rem;position:relative;overflow:hidden}
+.banner::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at top right,rgba(77,138,255,.13) 0%,transparent 65%);pointer-events:none}
+.banner-title{font-family:'Syne',sans-serif;font-size:.65rem;font-weight:700;color:rgba(77,138,255,.75);letter-spacing:2.5px;text-transform:uppercase;text-align:center;margin-bottom:.75rem}
+.grid{display:flex;flex-direction:column;gap:.55rem}
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(77,138,255,.2);border-radius:14px;padding:.75rem .85rem}
+.card-top{display:flex;align-items:center;gap:.75rem;margin-bottom:.6rem}
+.icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+.icon-blue{background:linear-gradient(135deg,#1a3f9f,#2979ff)}
+.icon-violet{background:linear-gradient(135deg,#4a1fa8,#7c3aed)}
+.body{flex:1;min-width:0}
+.name{font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;color:#e8eeff;display:flex;align-items:center;gap:6px;margin-bottom:.12rem;flex-wrap:wrap}
+.badge{font-size:.55rem;font-weight:700;letter-spacing:1px;padding:2px 7px;border-radius:20px;white-space:nowrap}
+.badge-green{background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.35);color:#00e676}
+.badge-violet{background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.4);color:#c084fc}
+.desc{font-size:.7rem;color:#7a90b8;line-height:1.4}
+.btn{display:block;width:100%;padding:.55rem 1rem;border-radius:10px;font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:.8px;text-align:center;text-decoration:none;color:#fff;transition:opacity .15s,transform .1s;-webkit-tap-highlight-color:transparent}
+.btn:active{transform:scale(.97);opacity:.85}
+.btn-green{background:linear-gradient(135deg,#00c853,#00897b);box-shadow:0 3px 12px rgba(0,200,83,.3)}
+.btn-violet{background:linear-gradient(135deg,#7c3aed,#4f46e5);box-shadow:0 3px 12px rgba(124,58,237,.3)}
+</style></head><body>
+<div class="cam-card">
+  <span class="cam-icon">📷</span>
+  <div class="cam-title">Photographiez votre document</div>
+  <div class="cam-tip">💡 Fond contrasté · ☀️ Bonne lumière · 📐 4 coins visibles</div>
+</div>
+<button class="big-btn" onclick="openCamera()">📷 &nbsp; Ouvrir l'appareil photo</button>
+<div class="sep"></div>
+<div class="banner">
+  <div class="banner-title">✦ Découvrez aussi nos autres apps Nova ✦</div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-top">
+        <div class="icon icon-blue">🤖</div>
+        <div class="body">
+          <div class="name">Nova Platform <span class="badge badge-green">GRATUIT</span></div>
+          <div class="desc">Génère tes CV, exposés, rapports et documents scolaires grâce à l'IA — en quelques secondes.</div>
         </div>
-        <button class="big-btn" onclick="openCamera()">📷 &nbsp; Ouvrir l'appareil photo</button>
-        <script>
-        function openCamera(){
-          try{const inp=window.parent.document.querySelector('input[type="file"]');
-            if(inp){inp.setAttribute('capture','environment');inp.setAttribute('accept','image/*');inp.click();return;}}catch(e){}
-          const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
-          inp.setAttribute('capture','environment');inp.click();
-        }
-        </script>""", height=300, scrolling=False)
+      </div>
+      <a href="https://dawn-flower-c012.mypublic1309.workers.dev/" target="_blank" class="btn btn-green">🚀 Visiter Nova Platform →</a>
+    </div>
+    <div class="card">
+      <div class="card-top">
+        <div class="icon icon-violet">🛠️</div>
+        <div class="body">
+          <div class="name">Nova Conception <span class="badge badge-violet">GRATUIT</span></div>
+          <div class="desc">Crée ton site web ou ton application mobile professionnelle — sans coder, gratuitement.</div>
+        </div>
+      </div>
+      <a href="https://aged-term-0d2e.nova1309ia.workers.dev/" target="_blank" class="btn btn-violet">🌐 Visiter Nova Conception →</a>
+    </div>
+  </div>
+</div>
+<script>
+function openCamera(){
+  try{const inp=window.parent.document.querySelector('input[type="file"]');
+    if(inp){inp.setAttribute('capture','environment');inp.setAttribute('accept','image/*');inp.click();return;}}catch(e){}
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.setAttribute('capture','environment');inp.click();
+}
+</script>
+</body></html>""", height=720, scrolling=False)
     else:
         img_mob = corriger_orientation(Image.open(photo))
         flux_image(img_mob, "nova_scan_document.pdf", "mob")
