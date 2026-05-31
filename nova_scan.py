@@ -492,36 +492,59 @@ def image_vers_pdf(img):
 
 # ── Bandeau Apps Nova ─────────────────────────────────────────────────────────
 def afficher_bandeau_apps():
-    st.markdown("""
-<div class="nova-apps-banner">
-  <div class="nova-apps-banner-title">✦ Découvrez aussi nos autres apps Nova ✦</div>
-  <div class="nova-apps-grid">
-
-    <div class="nova-app-card">
-      <div class="nova-app-card-top">
-        <div class="nova-app-icon icon-platform">🤖</div>
-        <div class="nova-app-body">
-          <div class="nova-app-name">Nova Platform <span class="nova-app-badge badge-free-green">GRATUIT</span></div>
-          <div class="nova-app-desc">Génère tes CV, exposés, rapports et documents scolaires grâce à l'IA — en quelques secondes.</div>
+    import streamlit.components.v1 as components
+    components.html("""<!DOCTYPE html><html><head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:transparent;font-family:'DM Sans',sans-serif;padding:0}
+.banner{background:linear-gradient(135deg,rgba(15,25,60,.97) 0%,rgba(20,35,80,.97) 100%);border:1px solid rgba(77,138,255,.3);border-radius:20px;padding:1.1rem 1rem 1rem;position:relative;overflow:hidden}
+.banner::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at top right,rgba(77,138,255,.13) 0%,transparent 65%);pointer-events:none}
+.title{font-family:'Syne',sans-serif;font-size:.7rem;font-weight:700;color:rgba(77,138,255,.75);letter-spacing:2.5px;text-transform:uppercase;text-align:center;margin-bottom:.85rem}
+.grid{display:flex;flex-direction:column;gap:.65rem}
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(77,138,255,.2);border-radius:14px;padding:.8rem .9rem}
+.card-top{display:flex;align-items:center;gap:.8rem;margin-bottom:.65rem}
+.icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+.icon-blue{background:linear-gradient(135deg,#1a3f9f,#2979ff)}
+.icon-violet{background:linear-gradient(135deg,#4a1fa8,#7c3aed)}
+.body{flex:1;min-width:0}
+.name{font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;color:#e8eeff;display:flex;align-items:center;gap:6px;margin-bottom:.15rem;flex-wrap:wrap}
+.badge{font-size:.58rem;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.badge-green{background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.35);color:#00e676}
+.badge-violet{background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.4);color:#c084fc}
+.desc{font-size:.73rem;color:#7a90b8;line-height:1.45}
+.btn{display:block;width:100%;padding:.6rem 1rem;border-radius:10px;font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;letter-spacing:.8px;text-align:center;text-decoration:none;color:#fff;transition:opacity .15s,transform .1s;-webkit-tap-highlight-color:transparent}
+.btn:active{transform:scale(.97);opacity:.85}
+.btn-green{background:linear-gradient(135deg,#00c853,#00897b);box-shadow:0 3px 14px rgba(0,200,83,.35)}
+.btn-violet{background:linear-gradient(135deg,#7c3aed,#4f46e5);box-shadow:0 3px 14px rgba(124,58,237,.35)}
+</style></head><body>
+<div class="banner">
+  <div class="title">✦ Découvrez aussi nos autres apps Nova ✦</div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-top">
+        <div class="icon icon-blue">🤖</div>
+        <div class="body">
+          <div class="name">Nova Platform <span class="badge badge-green">GRATUIT</span></div>
+          <div class="desc">Génère tes CV, exposés, rapports et documents scolaires grâce à l'IA — en quelques secondes.</div>
         </div>
       </div>
-      <a href="https://dawn-flower-c012.mypublic1309.workers.dev/" target="_blank" class="nova-visit-btn btn-visit-green">🚀 Visiter Nova Platform →</a>
+      <a href="https://dawn-flower-c012.mypublic1309.workers.dev/" target="_blank" class="btn btn-green">🚀 Visiter Nova Platform →</a>
     </div>
-
-    <div class="nova-app-card">
-      <div class="nova-app-card-top">
-        <div class="nova-app-icon icon-agency">🛠️</div>
-        <div class="nova-app-body">
-          <div class="nova-app-name">Nova Conception <span class="nova-app-badge badge-free-violet">GRATUIT</span></div>
-          <div class="nova-app-desc">Crée ton site web ou ton application mobile professionnelle — sans coder, gratuitement.</div>
+    <div class="card">
+      <div class="card-top">
+        <div class="icon icon-violet">🛠️</div>
+        <div class="body">
+          <div class="name">Nova Conception <span class="badge badge-violet">GRATUIT</span></div>
+          <div class="desc">Crée ton site web ou ton application mobile professionnelle — sans coder, gratuitement.</div>
         </div>
       </div>
-      <a href="https://aged-term-0d2e.nova1309ia.workers.dev/" target="_blank" class="nova-visit-btn btn-visit-violet">🌐 Visiter Nova Conception →</a>
+      <a href="https://aged-term-0d2e.nova1309ia.workers.dev/" target="_blank" class="btn btn-violet">🌐 Visiter Nova Conception →</a>
     </div>
-
   </div>
 </div>
-""", unsafe_allow_html=True)
+</body></html>""", height=320, scrolling=False)
 
 
 # ── Canvas interactif ─────────────────────────────────────────────────────────
