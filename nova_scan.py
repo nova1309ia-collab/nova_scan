@@ -22,118 +22,56 @@ html, body, [data-testid="stAppViewContainer"] {
 [data-testid="stHeader"] { display: none; }
 [data-testid="stFileUploader"] { display: none !important; }
 .nova-title {
-    text-align: center;
-    font-size: 2rem;
-    font-weight: 700;
-    color: #2979ff;
-    margin-bottom: 0.2rem;
-    letter-spacing: 2px;
+    text-align: center; font-size: 2rem; font-weight: 700;
+    color: #2979ff; margin-bottom: 0.2rem; letter-spacing: 2px;
 }
 .nova-subtitle {
-    text-align: center;
-    font-size: 0.85rem;
-    color: #7a90b8;
-    margin-bottom: 1.8rem;
-    letter-spacing: 1px;
-    text-transform: uppercase;
+    text-align: center; font-size: 0.85rem; color: #7a90b8;
+    margin-bottom: 1.8rem; letter-spacing: 1px; text-transform: uppercase;
 }
 .pdf-info {
-    background: rgba(0, 229, 255, 0.06);
-    border: 1px solid rgba(0, 229, 255, 0.2);
-    border-radius: 10px;
-    padding: 1rem 1.2rem;
-    margin: 1rem 0;
-    font-size: 0.85rem;
+    background: rgba(0,229,255,0.06); border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 10px; padding: 1rem 1.2rem; margin: 1rem 0; font-size: 0.85rem;
 }
 .pdf-info span { color: #00e5ff; font-weight: 600; }
 .badge-crop {
-    display: inline-block;
-    background: rgba(0,230,118,0.12);
-    border: 1px solid #00e676;
-    border-radius: 20px;
-    padding: 3px 12px;
-    font-size: 0.72rem;
-    color: #00e676;
-    margin-left: 8px;
+    display:inline-block; background:rgba(0,230,118,0.12); border:1px solid #00e676;
+    border-radius:20px; padding:3px 12px; font-size:0.72rem; color:#00e676; margin-left:8px;
 }
 .badge-manual {
-    display: inline-block;
-    background: rgba(41,121,255,0.15);
-    border: 1px solid #2979ff;
-    border-radius: 20px;
-    padding: 3px 12px;
-    font-size: 0.72rem;
-    color: #82b1ff;
-    margin-left: 8px;
+    display:inline-block; background:rgba(41,121,255,0.15); border:1px solid #2979ff;
+    border-radius:20px; padding:3px 12px; font-size:0.72rem; color:#82b1ff; margin-left:8px;
 }
 .badge-no-crop {
-    display: inline-block;
-    background: rgba(255,193,7,0.12);
-    border: 1px solid #ffc107;
-    border-radius: 20px;
-    padding: 3px 12px;
-    font-size: 0.72rem;
-    color: #ffc107;
-    margin-left: 8px;
+    display:inline-block; background:rgba(255,193,7,0.12); border:1px solid #ffc107;
+    border-radius:20px; padding:3px 12px; font-size:0.72rem; color:#ffc107; margin-left:8px;
 }
 [data-testid="stDownloadButton"] > button {
-    background-color: #2979ff !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 14px !important;
-    font-weight: 700 !important;
-    font-size: 1.1rem !important;
-    padding: 0.9rem 2rem !important;
-    width: 100% !important;
-    letter-spacing: 1px !important;
+    background-color: #2979ff !important; color: white !important; border: none !important;
+    border-radius: 14px !important; font-weight: 700 !important; font-size: 1.1rem !important;
+    padding: 0.9rem 2rem !important; width: 100% !important; letter-spacing: 1px !important;
     box-shadow: 0 4px 20px rgba(41,121,255,0.4) !important;
 }
 [data-testid="stButton"] > button {
-    background: transparent !important;
-    border: 1px solid #2979ff55 !important;
-    color: #7a90b8 !important;
-    border-radius: 8px !important;
-    width: 100% !important;
-    margin-top: 0.5rem !important;
+    background: transparent !important; border: 1px solid #2979ff55 !important;
+    color: #7a90b8 !important; border-radius: 8px !important;
+    width: 100% !important; margin-top: 0.5rem !important;
 }
-.preview-label {
-    font-size: 0.75rem;
-    color: #7a90b8;
-    text-align: center;
-    margin-bottom: 0.3rem;
-}
+.preview-label { font-size:0.75rem; color:#7a90b8; text-align:center; margin-bottom:0.3rem; }
 .sep { border: none; border-top: 1px solid #0d1e38; margin: 1.5rem 0; }
 .tip-box {
-    background: rgba(255,193,7,0.06);
-    border-left: 3px solid #ffc107;
-    border-radius: 0 8px 8px 0;
-    padding: 0.7rem 1rem;
-    font-size: 0.78rem;
-    color: #c9a227;
-    margin-bottom: 1rem;
+    background: rgba(255,193,7,0.06); border-left: 3px solid #ffc107;
+    border-radius: 0 8px 8px 0; padding: 0.7rem 1rem;
+    font-size: 0.78rem; color: #c9a227; margin-bottom: 1rem;
 }
-.steps-row {
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-bottom: 1.2rem;
-    flex-wrap: wrap;
-}
+.steps-row { display:flex; justify-content:center; gap:0.5rem; margin-bottom:1.2rem; flex-wrap:wrap; }
 .step-badge {
-    background: rgba(41,121,255,0.12);
-    border: 1px solid #2979ff44;
-    border-radius: 20px;
-    padding: 4px 14px;
-    font-size: 0.72rem;
-    color: #7a90b8;
-    white-space: nowrap;
+    background:rgba(41,121,255,0.12); border:1px solid #2979ff44;
+    border-radius:20px; padding:4px 14px; font-size:0.72rem; color:#7a90b8; white-space:nowrap;
 }
-.step-active {
-    background: rgba(41,121,255,0.3);
-    border-color: #2979ff;
-    color: #fff;
-    font-weight: 600;
-}
+.step-active { background:rgba(41,121,255,0.3); border-color:#2979ff; color:#fff; font-weight:600; }
+/* Cacher le champ relay */
+div[data-testid="stTextInput"] { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -144,8 +82,9 @@ st.markdown('<div class="nova-subtitle">Numérisation instantanée · Zéro inst
 if st.session_state.get("reset_requested"):
     st.session_state["reset_requested"] = False
     st.session_state["scan_key"] = st.session_state.get("scan_key", 0) + 1
-    for k in ["corners_result", "pending_image", "pending_name", "crop_mode"]:
-        st.session_state.pop(k, None)
+    for k in list(st.session_state.keys()):
+        if k.startswith(("state_", "corners_", "badge_", "_relay_")):
+            del st.session_state[k]
 
 if "scan_key" not in st.session_state:
     st.session_state["scan_key"] = 0
@@ -169,58 +108,46 @@ def corriger_orientation(img):
     return img
 
 
-# ── Détection automatique du document ────────────────────────────────────────
+# ── Détection automatique ─────────────────────────────────────────────────────
 def detecter_contour_auto(img_pil):
-    """Retourne les 4 coins détectés (coords image originale) ou None."""
     try:
         import cv2
         img_np = np.array(img_pil.convert("RGB"))
         h, w = img_np.shape[:2]
         scale = 800 / max(h, w)
-        small = cv2.resize(img_np, (int(w * scale), int(h * scale)))
+        small = cv2.resize(img_np, (int(w*scale), int(h*scale)))
         gray = cv2.cvtColor(small, cv2.COLOR_RGB2GRAY)
-        blur = cv2.GaussianBlur(gray, (5, 5), 0)
+        blur = cv2.GaussianBlur(gray, (5,5), 0)
         edges = cv2.Canny(blur, 50, 150)
-        edges = cv2.dilate(edges, np.ones((3, 3), np.uint8), iterations=2)
+        edges = cv2.dilate(edges, np.ones((3,3), np.uint8), iterations=2)
         contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
         contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
         for c in contours:
             peri = cv2.arcLength(c, True)
-            approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-            if len(approx) == 4 and cv2.contourArea(c) > (small.shape[0] * small.shape[1] * 0.2):
-                pts = (approx.reshape(4, 2) / scale).astype(np.float32)
-                s = pts.sum(axis=1)
-                diff = np.diff(pts, axis=1)
-                ordered = np.zeros((4, 2), dtype=np.float32)
-                ordered[0] = pts[np.argmin(s)]    # haut-gauche
-                ordered[1] = pts[np.argmin(diff)] # haut-droite
-                ordered[2] = pts[np.argmax(s)]    # bas-droite
-                ordered[3] = pts[np.argmax(diff)] # bas-gauche
+            approx = cv2.approxPolyDP(c, 0.02*peri, True)
+            if len(approx)==4 and cv2.contourArea(c) > (small.shape[0]*small.shape[1]*0.2):
+                pts = (approx.reshape(4,2)/scale).astype(np.float32)
+                s = pts.sum(axis=1); diff = np.diff(pts, axis=1)
+                ordered = np.zeros((4,2), dtype=np.float32)
+                ordered[0]=pts[np.argmin(s)];  ordered[1]=pts[np.argmin(diff)]
+                ordered[2]=pts[np.argmax(s)];  ordered[3]=pts[np.argmax(diff)]
                 return ordered.tolist()
         return None
     except Exception:
         return None
 
 
-# ── Recadrage perspective depuis 4 coins ─────────────────────────────────────
+# ── Recadrage perspective ─────────────────────────────────────────────────────
 def recadrer_depuis_coins(img_pil, coins):
-    """
-    coins : liste de 4 points [[x,y], ...] dans l'ordre TL, TR, BR, BL
-    coords relatives à l'image PIL originale.
-    """
     import cv2
     img_np = np.array(img_pil.convert("RGB"))
     pts = np.array(coins, dtype=np.float32)
-    wA = np.linalg.norm(pts[2] - pts[3])
-    wB = np.linalg.norm(pts[1] - pts[0])
-    hA = np.linalg.norm(pts[1] - pts[2])
-    hB = np.linalg.norm(pts[0] - pts[3])
-    maxW = int(max(wA, wB))
-    maxH = int(max(hA, hB))
-    dst = np.array([[0, 0], [maxW-1, 0], [maxW-1, maxH-1], [0, maxH-1]], dtype=np.float32)
+    wA = np.linalg.norm(pts[2]-pts[3]); wB = np.linalg.norm(pts[1]-pts[0])
+    hA = np.linalg.norm(pts[1]-pts[2]); hB = np.linalg.norm(pts[0]-pts[3])
+    maxW = int(max(wA,wB)); maxH = int(max(hA,hB))
+    dst = np.array([[0,0],[maxW-1,0],[maxW-1,maxH-1],[0,maxH-1]], dtype=np.float32)
     M = cv2.getPerspectiveTransform(pts, dst)
     warped = cv2.warpPerspective(img_np, M, (maxW, maxH))
-    # Amélioration contraste scan
     gray = cv2.cvtColor(warped, cv2.COLOR_RGB2GRAY)
     clean = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 10)
     return Image.fromarray(clean).convert("RGB")
@@ -237,416 +164,239 @@ def image_vers_pdf(img):
     return buf.getvalue(), img
 
 
-# ── Canvas interactif de recadrage ───────────────────────────────────────────
-def canvas_recadrage(img_pil, coins_initiales, component_key):
+# ── Canvas interactif ─────────────────────────────────────────────────────────
+def canvas_recadrage(img_pil, coins_initiales, relay_input_key):
     """
-    Affiche un canvas HTML avec 4 poignées déplaçables.
-    Retourne les coordonnées confirmées ou None.
-    """
-    # Encoder l'image en base64
-    buf = io.BytesIO()
-    img_pil.save(buf, format="JPEG", quality=80)
-    b64 = base64.b64encode(buf.getvalue()).decode()
-
-    w_orig, h_orig = img_pil.size
-
-    # Coins par défaut si aucun détecté (marges 10%)
-    if coins_initiales:
-        coins_json = json.dumps(coins_initiales)
-    else:
-        mx, my = w_orig * 0.08, h_orig * 0.08
-        coins_json = json.dumps([
-            [mx, my],
-            [w_orig - mx, my],
-            [w_orig - mx, h_orig - my],
-            [mx, h_orig - my],
-        ])
-
-    import streamlit.components.v1 as components
-
-    html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-* {{ box-sizing: border-box; margin: 0; padding: 0; }}
-body {{ background: #050d1a; font-family: 'Segoe UI', sans-serif; touch-action: none; }}
-#wrap {{
-  position: relative;
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-}}
-canvas {{
-  display: block;
-  width: 100%;
-  border-radius: 12px;
-  border: 1.5px solid #2979ff44;
-  touch-action: none;
-  cursor: crosshair;
-}}
-.toolbar {{
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}}
-.btn {{
-  flex: 1;
-  padding: 13px;
-  border-radius: 14px;
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  border: none;
-  font-family: 'Segoe UI', sans-serif;
-  transition: transform 0.1s, opacity 0.1s;
-  -webkit-tap-highlight-color: transparent;
-}}
-.btn:active {{ transform: scale(0.97); opacity: 0.9; }}
-.btn-confirm {{
-  background: linear-gradient(135deg, #2979ff, #1a5cd4);
-  color: #fff;
-  box-shadow: 0 4px 18px rgba(41,121,255,0.5);
-}}
-.btn-cancel {{
-  background: transparent;
-  border: 1px solid #2979ff44 !important;
-  color: #7a90b8;
-}}
-.hint {{
-  text-align: center;
-  font-size: 0.75rem;
-  color: #4a6080;
-  margin-top: 7px;
-  letter-spacing: 0.3px;
-}}
-</style>
-</head>
-<body>
-<div id="wrap">
-  <canvas id="cv"></canvas>
-  <div class="toolbar">
-    <button class="btn btn-cancel" onclick="cancel()">✕ Annuler</button>
-    <button class="btn btn-confirm" onclick="confirm_crop()">✓ Confirmer le recadrage</button>
-  </div>
-  <div class="hint">Glissez les coins bleus sur les bords du document</div>
-</div>
-
-<script>
-const IMG_W = {w_orig};
-const IMG_H = {h_orig};
-const COINS_INIT = {coins_json};
-
-const canvas = document.getElementById('cv');
-const ctx = canvas.getContext('2d');
-const img = new Image();
-img.src = 'data:image/jpeg;base64,{b64}';
-
-// Résolution interne du canvas = taille image originale
-canvas.width = IMG_W;
-canvas.height = IMG_H;
-
-// Coins en coords image originale
-let coins = COINS_INIT.map(c => ({{x: c[0], y: c[1]}}));
-let drag = null;
-const R = Math.max(18, Math.min(IMG_W, IMG_H) * 0.04);
-
-img.onload = () => draw();
-
-function draw() {{
-  ctx.clearRect(0, 0, IMG_W, IMG_H);
-  ctx.drawImage(img, 0, 0);
-
-  // Overlay sombre hors zone
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(coins[0].x, coins[0].y);
-  coins.forEach((c,i) => {{ if(i>0) ctx.lineTo(c.x, c.y); }});
-  ctx.closePath();
-  ctx.save();
-  ctx.fillStyle = 'rgba(0,0,0,0.45)';
-  ctx.fillRect(0, 0, IMG_W, IMG_H);
-  ctx.restore();
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(coins[0].x, coins[0].y);
-  coins.forEach((c,i) => {{ if(i>0) ctx.lineTo(c.x, c.y); }});
-  ctx.closePath();
-  ctx.globalCompositeOperation = 'destination-out';
-  ctx.fillStyle = 'rgba(0,0,0,1)';
-  ctx.fill();
-  ctx.restore();
-
-  // Contour bleu
-  ctx.beginPath();
-  ctx.moveTo(coins[0].x, coins[0].y);
-  coins.forEach((c,i) => {{ if(i>0) ctx.lineTo(c.x, c.y); }});
-  ctx.closePath();
-  ctx.strokeStyle = '#2979ff';
-  ctx.lineWidth = Math.max(3, R * 0.18);
-  ctx.stroke();
-
-  // Poignées
-  coins.forEach((c, i) => {{
-    // Ombre
-    ctx.beginPath();
-    ctx.arc(c.x, c.y, R + 4, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.fill();
-    // Cercle
-    ctx.beginPath();
-    ctx.arc(c.x, c.y, R, 0, Math.PI*2);
-    ctx.fillStyle = drag === i ? '#82b1ff' : '#2979ff';
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = Math.max(2, R * 0.12);
-    ctx.stroke();
-  }});
-}}
-
-function getPos(e) {{
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = IMG_W / rect.width;
-  const scaleY = IMG_H / rect.height;
-  const src = e.touches ? e.touches[0] : e;
-  return {{
-    x: Math.max(0, Math.min(IMG_W, (src.clientX - rect.left) * scaleX)),
-    y: Math.max(0, Math.min(IMG_H, (src.clientY - rect.top) * scaleY)),
-  }};
-}}
-
-function hitTest(pos) {{
-  for (let i = 0; i < coins.length; i++) {{
-    const dx = pos.x - coins[i].x;
-    const dy = pos.y - coins[i].y;
-    if (Math.sqrt(dx*dx + dy*dy) < R * 1.8) return i;
-  }}
-  return null;
-}}
-
-canvas.addEventListener('mousedown', e => {{ drag = hitTest(getPos(e)); }});
-canvas.addEventListener('touchstart', e => {{ e.preventDefault(); drag = hitTest(getPos(e)); }}, {{passive:false}});
-
-canvas.addEventListener('mousemove', e => {{
-  if (drag === null) return;
-  const p = getPos(e);
-  coins[drag] = p;
-  draw();
-}});
-canvas.addEventListener('touchmove', e => {{
-  e.preventDefault();
-  if (drag === null) return;
-  const p = getPos(e);
-  coins[drag] = p;
-  draw();
-}}, {{passive:false}});
-
-canvas.addEventListener('mouseup', () => {{ drag = null; }});
-canvas.addEventListener('touchend', () => {{ drag = null; }});
-
-function confirm_crop() {{
-  const result = coins.map(c => [Math.round(c.x), Math.round(c.y)]);
-  window.parent.postMessage({{type:'nova_corners', key:'{component_key}', corners: result}}, '*');
-}}
-
-function cancel() {{
-  window.parent.postMessage({{type:'nova_cancel', key:'{component_key}'}}, '*');
-}}
-</script>
-</body>
-</html>
-"""
-    components.html(html, height=620, scrolling=False)
-
-
-# ── Listener postMessage via query params trick ───────────────────────────────
-# Streamlit ne peut pas recevoir postMessage directement.
-# On utilise une zone de texte cachée + javascript qui écrit dans un st.text_input,
-# puis on lit la valeur. Alternative propre : st.query_params.
-# On utilise ici l'approche "composant relais" : un 2e iframe lit le message et
-# redirige vers un endpoint Streamlit via fetch sur le même origin — impossible.
-# 
-# Solution retenue : stocker les coins dans session_state via un st.text_input
-# caché dont le JS remplit la valeur via DOM manipulation (hack classique Streamlit).
-# Plus robuste : on injecte le canvas dans la même page et on utilise
-# un st.text_area + JS pour déclencher un rerun.
-
-def canvas_avec_relay(img_pil, coins_initiales, instance_key):
-    """
-    Affiche le canvas + un champ texte caché.
-    Le JS du canvas écrit les coins dans le champ, déclenche un 'input' event,
-    ce qui force Streamlit à relire la valeur au prochain rerun.
-    Retourne (action, corners) où action = 'confirm' | 'cancel' | None
+    Affiche le canvas avec 4 coins déplaçables.
+    Quand l'utilisateur confirme, le JS écrit dans le st.text_input
+    identifié par relay_input_key via manipulation DOM native Streamlit.
     """
     import streamlit.components.v1 as components
 
+    # Redimensionner pour alléger le base64 (max 1200px)
+    img_display = img_pil.copy()
+    max_dim = 1200
+    w_o, h_o = img_display.size
+    if max(w_o, h_o) > max_dim:
+        scale = max_dim / max(w_o, h_o)
+        img_display = img_display.resize((int(w_o*scale), int(h_o*scale)), Image.LANCZOS)
+
+    w_disp, h_disp = img_display.size
+    scale_x = w_o / w_disp  # pour reconvertir en coords originales
+    scale_y = h_o / h_disp
+
     buf = io.BytesIO()
-    img_pil.save(buf, format="JPEG", quality=75)
+    img_display.save(buf, format="JPEG", quality=82)
     b64 = base64.b64encode(buf.getvalue()).decode()
-    w_orig, h_orig = img_pil.size
 
+    # Coins en coords display
     if coins_initiales:
-        coins_json = json.dumps(coins_initiales)
+        coins_disp = [[c[0]/scale_x, c[1]/scale_y] for c in coins_initiales]
     else:
-        mx, my = w_orig * 0.08, h_orig * 0.08
-        coins_json = json.dumps([
-            [mx, my], [w_orig - mx, my],
-            [w_orig - mx, h_orig - my], [mx, h_orig - my],
-        ])
+        mx, my = w_disp*0.08, h_disp*0.08
+        coins_disp = [
+            [mx, my], [w_disp-mx, my],
+            [w_disp-mx, h_disp-my], [mx, h_disp-my]
+        ]
+    coins_json = json.dumps(coins_disp)
+    scales_json = json.dumps([scale_x, scale_y])
 
-    field_key = f"_relay_{instance_key}"
-    val = st.text_input("relay", key=field_key, label_visibility="collapsed")
-
-    if val.startswith("CONFIRM:"):
-        try:
-            corners = json.loads(val[8:])
-            return "confirm", corners
-        except Exception:
-            pass
-    elif val == "CANCEL":
-        return "cancel", None
-
-    html = f"""
-<!DOCTYPE html><html><head>
+    # Le JS va chercher l'input Streamlit par son data-testid aria-label
+    # On passe le relay_input_key pour qu'il trouve le bon champ
+    html = f"""<!DOCTYPE html><html><head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{background:#050d1a;font-family:'Segoe UI',sans-serif;touch-action:none;padding:4px}}
-#wrap{{position:relative;width:100%;max-width:520px;margin:0 auto}}
-canvas{{display:block;width:100%;border-radius:12px;border:1.5px solid #2979ff44;touch-action:none}}
+body{{background:#050d1a;font-family:'Segoe UI',sans-serif;padding:2px;overflow:hidden}}
+#wrap{{position:relative;width:100%;max-width:600px;margin:0 auto}}
+#cvWrap{{position:relative;width:100%;}}
+canvas{{display:block;width:100%;border-radius:10px;touch-action:none;cursor:crosshair;}}
 .toolbar{{display:flex;gap:8px;margin-top:10px}}
-.btn{{flex:1;padding:14px;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;border:none;font-family:'Segoe UI',sans-serif;transition:transform .1s,opacity .1s;-webkit-tap-highlight-color:transparent}}
-.btn:active{{transform:scale(.97);opacity:.9}}
-.btn-ok{{background:linear-gradient(135deg,#2979ff,#1a5cd4);color:#fff;box-shadow:0 4px 18px rgba(41,121,255,.5)}}
-.btn-no{{background:transparent;border:1px solid #2979ff44!important;color:#7a90b8}}
-.hint{{text-align:center;font-size:.75rem;color:#4a6080;margin-top:7px}}
+.btn{{flex:1;padding:14px 8px;border-radius:14px;font-size:.95rem;font-weight:700;
+      cursor:pointer;border:none;font-family:'Segoe UI',sans-serif;
+      -webkit-tap-highlight-color:transparent;transition:transform .1s,opacity .1s}}
+.btn:active{{transform:scale(.97);opacity:.85}}
+.btn-ok{{background:linear-gradient(135deg,#2979ff,#1565c0);color:#fff;
+         box-shadow:0 4px 18px rgba(41,121,255,.5)}}
+.btn-skip{{background:rgba(255,255,255,.06);border:1px solid #2979ff44!important;color:#7a90b8}}
+.hint{{text-align:center;font-size:.75rem;color:#4a6080;margin-top:7px;letter-spacing:.3px}}
+#status{{text-align:center;font-size:.78rem;color:#00e676;margin-top:5px;min-height:1.2em}}
 </style></head><body>
 <div id="wrap">
-  <canvas id="cv"></canvas>
-  <div class="toolbar">
-    <button class="btn btn-no" onclick="doCancel()">✕ Annuler</button>
-    <button class="btn btn-ok" onclick="doConfirm()">✓ Confirmer le recadrage</button>
+  <div id="cvWrap">
+    <canvas id="cv"></canvas>
   </div>
-  <div class="hint">Glissez les 4 coins bleus sur les bords du document</div>
+  <div class="toolbar">
+    <button class="btn btn-skip" onclick="doSkip()">⏭ Sans recadrage</button>
+    <button class="btn btn-ok" onclick="doConfirm()">✓ Confirmer</button>
+  </div>
+  <div class="hint">Glissez les 4 coins 🔵 sur les bords du document</div>
+  <div id="status"></div>
 </div>
 <script>
-const IW={w_orig},IH={h_orig};
-const INIT={coins_json};
+const IW={w_disp}, IH={h_disp};
+const SCALES={scales_json};   // [sx, sy] pour reconvertir en coords originales
+const COINS_INIT={coins_json};
+const RELAY_KEY='{relay_input_key}';
+
 const cv=document.getElementById('cv');
 const ctx=cv.getContext('2d');
+// Taille interne = taille affichée (on travaille en coords display)
 cv.width=IW; cv.height=IH;
+
 const img=new Image();
 img.src='data:image/jpeg;base64,{b64}';
-let coins=INIT.map(c=>({{x:c[0],y:c[1]}}));
+let coins=COINS_INIT.map(c=>({{x:c[0],y:c[1]}}));
 let drag=null;
-const R=Math.max(22,Math.min(IW,IH)*0.045);
+const R=Math.max(20, Math.min(IW,IH)*0.042);
+
 img.onload=()=>draw();
 
+// ── Dessin ────────────────────────────────────────────────────────
 function draw(){{
   ctx.clearRect(0,0,IW,IH);
+
+  // 1. Image de fond
   ctx.drawImage(img,0,0);
-  // Masque sombre
-  ctx.save();
-  ctx.fillStyle='rgba(0,0,0,.5)';
-  ctx.fillRect(0,0,IW,IH);
-  ctx.globalCompositeOperation='destination-out';
-  ctx.beginPath();
-  ctx.moveTo(coins[0].x,coins[0].y);
-  coins.forEach((c,i)=>{{if(i)ctx.lineTo(c.x,c.y)}});
-  ctx.closePath();
-  ctx.fillStyle='rgba(0,0,0,1)';
-  ctx.fill();
-  ctx.restore();
-  // Contour
+
+  // 2. Masque semi-transparent HORS zone sélectionnée
+  //    On utilise un canvas offscreen pour éviter le bug destination-out
+  const offscreen=new OffscreenCanvas(IW,IH);
+  const oc=offscreen.getContext('2d');
+  oc.fillStyle='rgba(0,0,0,0.55)';
+  oc.fillRect(0,0,IW,IH);
+  // Trouer la zone doc
+  oc.globalCompositeOperation='destination-out';
+  oc.beginPath();
+  oc.moveTo(coins[0].x,coins[0].y);
+  coins.forEach((c,i)=>{{if(i)oc.lineTo(c.x,c.y)}});
+  oc.closePath();
+  oc.fillStyle='rgba(0,0,0,1)';
+  oc.fill();
+  ctx.drawImage(offscreen,0,0);
+
+  // 3. Contour bleu
   ctx.beginPath();
   ctx.moveTo(coins[0].x,coins[0].y);
   coins.forEach((c,i)=>{{if(i)ctx.lineTo(c.x,c.y)}});
   ctx.closePath();
   ctx.strokeStyle='#2979ff';
-  ctx.lineWidth=Math.max(3,R*.15);
+  ctx.lineWidth=Math.max(2.5,R*.12);
   ctx.stroke();
-  // Lignes diagonales guide
-  ctx.setLineDash([R*.6,R*.4]);
-  ctx.strokeStyle='rgba(41,121,255,.3)';
-  ctx.lineWidth=Math.max(1,R*.06);
-  ctx.beginPath(); ctx.moveTo(coins[0].x,coins[0].y); ctx.lineTo(coins[2].x,coins[2].y); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(coins[1].x,coins[1].y); ctx.lineTo(coins[3].x,coins[3].y); ctx.stroke();
-  ctx.setLineDash([]);
-  // Poignées
+
+  // 4. Poignées
   coins.forEach((c,i)=>{{
-    ctx.beginPath(); ctx.arc(c.x,c.y,R+5,0,Math.PI*2);
-    ctx.fillStyle='rgba(0,0,0,.3)'; ctx.fill();
+    // Halo
+    ctx.beginPath(); ctx.arc(c.x,c.y,R+6,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,0,0,.25)'; ctx.fill();
+    // Cercle
     ctx.beginPath(); ctx.arc(c.x,c.y,R,0,Math.PI*2);
-    ctx.fillStyle=drag===i?'#82b1ff':'#2979ff'; ctx.fill();
+    const active=drag===i;
+    ctx.fillStyle=active?'#82b1ff':'#2979ff'; ctx.fill();
     ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(2,R*.1); ctx.stroke();
-    // Croix centre
-    const s=R*.35;
-    ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.lineWidth=Math.max(1.5,R*.07);
+    // Croix
+    const s=R*.38;
+    ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=Math.max(1.5,R*.08);
     ctx.beginPath(); ctx.moveTo(c.x-s,c.y); ctx.lineTo(c.x+s,c.y); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(c.x,c.y-s); ctx.lineTo(c.x,c.y+s); ctx.stroke();
+    // Label coin
+    const labels=['↖','↗','↘','↙'];
+    ctx.fillStyle='rgba(255,255,255,.7)';
+    ctx.font=`bold ${{Math.max(11,R*.45)}}px Segoe UI`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(labels[i], c.x, c.y);
   }});
 }}
 
+// ── Coords canvas ─────────────────────────────────────────────────
 function gp(e){{
-  const r=cv.getBoundingClientRect(),sx=IW/r.width,sy=IH/r.height;
-  const s=e.touches?e.touches[0]:e;
-  return{{x:Math.max(0,Math.min(IW,(s.clientX-r.left)*sx)),
-          y:Math.max(0,Math.min(IH,(s.clientY-r.top)*sy))}};
+  const r=cv.getBoundingClientRect();
+  const sx=IW/r.width, sy=IH/r.height;
+  const src=e.touches?e.touches[0]:e;
+  return{{
+    x:Math.max(0,Math.min(IW,(src.clientX-r.left)*sx)),
+    y:Math.max(0,Math.min(IH,(src.clientY-r.top)*sy))
+  }};
 }}
 function hit(p){{
-  for(let i=0;i<4;i++){{const d=coins[i],dx=p.x-d.x,dy=p.y-d.y;if(Math.sqrt(dx*dx+dy*dy)<R*2)return i;}}
+  for(let i=0;i<4;i++){{
+    const dx=p.x-coins[i].x, dy=p.y-coins[i].y;
+    if(Math.sqrt(dx*dx+dy*dy)<R*2.2) return i;
+  }}
   return null;
 }}
-cv.addEventListener('mousedown',e=>{{drag=hit(gp(e));draw();}});
+
+cv.addEventListener('mousedown',e=>{{e.preventDefault();drag=hit(gp(e));draw();}});
 cv.addEventListener('touchstart',e=>{{e.preventDefault();drag=hit(gp(e));draw();}},{{passive:false}});
 cv.addEventListener('mousemove',e=>{{if(drag===null)return;coins[drag]=gp(e);draw();}});
 cv.addEventListener('touchmove',e=>{{e.preventDefault();if(drag===null)return;coins[drag]=gp(e);draw();}},{{passive:false}});
 cv.addEventListener('mouseup',()=>{{drag=null;draw();}});
 cv.addEventListener('touchend',()=>{{drag=null;draw();}});
 
-function writeToStreamlit(val){{
+// ── Écriture dans Streamlit via DOM ───────────────────────────────
+function writeRelay(value){{
+  // Cherche le bon input Streamlit (celui dont le label=RELAY_KEY)
+  // Streamlit génère un input[type=text] pour chaque st.text_input
   try{{
-    const inputs=window.parent.document.querySelectorAll('input[type="text"]');
+    const parent=window.parent.document;
+    // Cherche par aria-label ou par data-testid contenant la clé
+    let found=null;
+    const inputs=parent.querySelectorAll('input[type="text"]');
     for(const inp of inputs){{
-      if(inp.value==='' || inp.dataset.novaRelay){{
-        inp.dataset.novaRelay='1';
-        const nativeInputValueSetter=Object.getOwnPropertyDescriptor(window.parent.HTMLInputElement.prototype,'value').set;
-        nativeInputValueSetter.call(inp,val);
-        inp.dispatchEvent(new Event('input',{{bubbles:true}}));
-        return true;
+      // Streamlit met le label comme aria-label sur certaines versions,
+      // ou on cherche le plus proche input vide / marqué relay
+      if(inp.getAttribute('aria-label')===RELAY_KEY || inp.dataset.novaRelay===RELAY_KEY){{
+        found=inp; break;
       }}
     }}
-  }}catch(e){{console.error(e);}}
-  return false;
-}}
-
-function sendToParent(payload){{
-  window.parent.postMessage({{novaRelay:true,payload}},'*');
+    // Fallback : prendre le premier input text vide non marqué
+    if(!found){{
+      for(const inp of inputs){{
+        if(!inp.dataset.novaRelay){{
+          found=inp; break;
+        }}
+      }}
+    }}
+    if(!found){{ document.getElementById('status').textContent='⚠ Champ non trouvé'; return false; }}
+    found.dataset.novaRelay=RELAY_KEY;
+    const setter=Object.getOwnPropertyDescriptor(window.parent.HTMLInputElement.prototype,'value').set;
+    setter.call(found, value);
+    found.dispatchEvent(new Event('input',{{bubbles:true}}));
+    return true;
+  }}catch(err){{
+    document.getElementById('status').textContent='Erreur: '+err.message;
+    return false;
+  }}
 }}
 
 function doConfirm(){{
-  const r=coins.map(c=>[Math.round(c.x),Math.round(c.y)]);
-  sendToParent('CONFIRM:'+JSON.stringify(r));
+  // Reconvertir en coords image originale
+  const result=coins.map(c=>[
+    Math.round(c.x*SCALES[0]),
+    Math.round(c.y*SCALES[1])
+  ]);
+  document.getElementById('status').textContent='⏳ Application du recadrage...';
+  const ok=writeRelay('CONFIRM:'+JSON.stringify(result));
+  if(!ok) document.getElementById('status').textContent='⚠ Réessayez ou utilisez "Sans recadrage"';
 }}
-function doCancel(){{
-  sendToParent('CANCEL');
+
+function doSkip(){{
+  document.getElementById('status').textContent='⏳ Chargement...';
+  writeRelay('SKIP');
 }}
 </script>
-</body></html>
-"""
-    components.html(html, height=640, scrolling=False)
-    return None, None
+</body></html>"""
+
+    components.html(html, height=660, scrolling=False)
 
 
-# ── Affichage résultat final ──────────────────────────────────────────────────
+# ── Affichage résultat ────────────────────────────────────────────────────────
 def afficher_resultat(img, nom_fichier, badge_mode, key_dl, key_btn):
     try:
         pdf_bytes, img_rgb = image_vers_pdf(img)
         w, h = img_rgb.size
-        taille_ko = len(pdf_bytes) / 1024
-        taille_str = f"{taille_ko/1024:.1f} Mo" if taille_ko >= 1024 else f"{taille_ko:.0f} Ko"
+        taille_ko = len(pdf_bytes)/1024
+        taille_str = f"{taille_ko/1024:.1f} Mo" if taille_ko>=1024 else f"{taille_ko:.0f} Ko"
 
         st.markdown('<div class="steps-row">'
                     '<div class="step-badge">① ✓ Photo prise</div>'
@@ -658,29 +408,22 @@ def afficher_resultat(img, nom_fichier, badge_mode, key_dl, key_btn):
         st.image(img_rgb, use_container_width=True)
 
         badges = {
-            "auto":   '<span class="badge-crop">✂️ Recadré automatiquement</span>',
+            "auto":   '<span class="badge-crop">✂️ Recadré auto</span>',
             "manual": '<span class="badge-manual">✋ Recadrage manuel</span>',
             "none":   '<span class="badge-no-crop">⚠️ Sans recadrage</span>',
         }
-        badge_html = badges.get(badge_mode, "")
-
-        st.markdown(f"""
-        <div class="pdf-info">
-            📄 PDF prêt ! {badge_html}<br>
-            Taille : <span>{taille_str}</span> &nbsp;|&nbsp;
-            Résolution : <span>{w} × {h} px</span>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f"""<div class="pdf-info">
+            📄 PDF prêt&nbsp;! {badges.get(badge_mode,'')}
+            <br>Taille : <span>{taille_str}</span> &nbsp;|&nbsp; Résolution : <span>{w} × {h} px</span>
+        </div>""", unsafe_allow_html=True)
 
         st.download_button(
             label="⬇️  TÉLÉCHARGER LE PDF",
-            data=pdf_bytes,
-            file_name=nom_fichier,
-            mime="application/pdf",
-            key=key_dl,
+            data=pdf_bytes, file_name=nom_fichier,
+            mime="application/pdf", key=key_dl,
         )
     except Exception as e:
-        st.error(f"Erreur : {e}")
+        st.error(f"Erreur PDF : {e}")
 
     st.markdown('<hr class="sep">', unsafe_allow_html=True)
     if st.button("🔄  Scanner un autre document", key=key_btn):
@@ -688,164 +431,86 @@ def afficher_resultat(img, nom_fichier, badge_mode, key_dl, key_btn):
         st.rerun()
 
 
-# ── Flux principal après réception d'une image ───────────────────────────────
-def flux_image(img_pil, nom_pdf, instance_prefix):
-    """
-    Gère le flux complet :
-    1. Détection auto
-    2. Canvas de recadrage manuel
-    3. Résultat PDF
-    """
-    state_key = f"state_{instance_prefix}"
-    corners_key = f"corners_{instance_prefix}"
-    badge_key = f"badge_{instance_prefix}"
+# ── Flux principal ────────────────────────────────────────────────────────────
+def flux_image(img_pil, nom_pdf, prefix):
+    state_key   = f"state_{prefix}"
+    corners_key = f"corners_{prefix}"
+    badge_key   = f"badge_{prefix}"
+    relay_key   = f"relay_{prefix}_{sk}"
 
     if state_key not in st.session_state:
         st.session_state[state_key] = "detecting"
 
     state = st.session_state[state_key]
 
-    # ── Étape 1 : détection + canvas ────────────────────────────────────────
-    if state in ("detecting", "canvas"):
-        if state == "detecting":
-            with st.spinner("🔍 Détection du document..."):
-                coins = detecter_contour_auto(img_pil)
-            st.session_state[corners_key] = coins
-            st.session_state[state_key] = "canvas"
-            st.rerun()
+    # ── DÉTECTION ──
+    if state == "detecting":
+        with st.spinner("🔍 Détection du document..."):
+            coins = detecter_contour_auto(img_pil)
+        st.session_state[corners_key] = coins
+        st.session_state[state_key] = "canvas"
+        st.rerun()
 
-        # ── Canvas interactif ─────────────────────────────────────────────
+    # ── CANVAS ──
+    elif state == "canvas":
         st.markdown('<div class="steps-row">'
                     '<div class="step-badge">① ✓ Photo prise</div>'
                     '<div class="step-badge step-active">② Ajuster le recadrage</div>'
-                    '<div class="step-badge">③ Télécharger PDF</div>'
+                    '<div class="step-badge">③ PDF</div>'
                     '</div>', unsafe_allow_html=True)
 
         coins = st.session_state.get(corners_key)
-
         if coins:
-            st.markdown("""
-            <div style="background:rgba(0,230,118,0.07);border:1px solid #00e67644;border-radius:10px;
-                        padding:.6rem 1rem;font-size:.78rem;color:#00e676;margin-bottom:.8rem;text-align:center;">
-                ✂️ Document détecté automatiquement — ajustez les coins si nécessaire
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown("""<div style="background:rgba(0,230,118,.07);border:1px solid #00e67644;
+                border-radius:10px;padding:.55rem 1rem;font-size:.78rem;color:#00e676;
+                margin-bottom:.7rem;text-align:center;">
+                ✂️ Document détecté — ajustez les coins si besoin</div>""",
+                unsafe_allow_html=True)
         else:
-            st.markdown("""
-            <div class="tip-box">
-                💡 Document non détecté. Placez les 4 coins bleus manuellement sur les bords.
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown("""<div class="tip-box">
+                💡 Document non détecté. Placez les coins manuellement.</div>""",
+                unsafe_allow_html=True)
 
-        # Afficher le canvas
-        canvas_avec_relay(img_pil, coins, f"{instance_prefix}_{sk}")
+        # Champ relay (caché par CSS)
+        relay_val = st.text_input("relay", key=relay_key, label_visibility="collapsed")
 
-        # Bouton "Utiliser sans recadrage"
-        st.markdown('<hr class="sep">', unsafe_allow_html=True)
-        if st.button("⏭️  Utiliser sans recadrage", key=f"skip_{instance_prefix}"):
-            st.session_state[state_key] = "done_none"
-            st.rerun()
+        # Canvas
+        canvas_recadrage(img_pil, coins, relay_key)
 
-        # Lire le relay field (rempli par JS via postMessage trick alternatif)
-        # Puisque postMessage cross-frame est bloqué dans Streamlit cloud,
-        # on utilise un bouton hidden + URL param approach
-        # Alternative propre : st.query_params
-        relay_val = st.session_state.get(f"_relay_{instance_prefix}_{sk}", "")
+        # Traitement de la réponse du JS
         if relay_val.startswith("CONFIRM:"):
             try:
                 corners_from_js = json.loads(relay_val[8:])
                 st.session_state[corners_key] = corners_from_js
                 st.session_state[badge_key] = "manual"
-                st.session_state[state_key] = "done_manual"
+                st.session_state[state_key] = "result"
                 st.rerun()
-            except Exception:
-                pass
-        elif relay_val == "CANCEL":
-            st.session_state["reset_requested"] = True
+            except Exception as e:
+                st.error(f"Erreur recadrage : {e}")
+        elif relay_val == "SKIP":
+            st.session_state[badge_key] = "none"
+            st.session_state[state_key] = "result"
             st.rerun()
 
-    # ── Étape 2 : rendu PDF ──────────────────────────────────────────────────
-    elif state in ("done_auto", "done_manual", "done_none"):
-        badge = st.session_state.get(badge_key, "none")
+    # ── RÉSULTAT ──
+    elif state == "result":
+        badge  = st.session_state.get(badge_key, "none")
         corners = st.session_state.get(corners_key)
 
-        if state == "done_none" or not corners:
+        if badge == "none" or not corners:
             img_finale = img_pil
         else:
             try:
                 img_finale = recadrer_depuis_coins(img_pil, corners)
             except Exception:
                 img_finale = img_pil
+                st.warning("Recadrage impossible, image originale utilisée.")
 
         afficher_resultat(
             img_finale, nom_pdf, badge,
-            key_dl=f"dl_{instance_prefix}",
-            key_btn=f"reset_{instance_prefix}",
+            key_dl=f"dl_{prefix}_{sk}",
+            key_btn=f"reset_{prefix}_{sk}",
         )
-
-
-# ── Écoute postMessage via composant relais ───────────────────────────────────
-# Streamlit ne peut pas recevoir postMessage nativement.
-# On crée un mini-composant "écouteur" qui intercepte les messages
-# du canvas iframe et les pousse dans un st.session_state via
-# query params + st.rerun(), ce qui est le pattern officiel.
-
-def inject_message_listener(instance_prefix):
-    """
-    Injecte un iframe invisible qui écoute les postMessages du canvas
-    et met à jour les query params pour déclencher un rerun.
-    """
-    import streamlit.components.v1 as components
-
-    # On lit d'abord les query params
-    qp = st.query_params
-    nova_action = qp.get("nova_action", "")
-    nova_key = qp.get("nova_key", "")
-    nova_data = qp.get("nova_data", "")
-
-    state_key = f"state_{instance_prefix}"
-    corners_key = f"corners_{instance_prefix}"
-    badge_key = f"badge_{instance_prefix}"
-
-    if nova_action == "confirm" and nova_key == instance_prefix:
-        try:
-            corners = json.loads(nova_data)
-            st.session_state[corners_key] = corners
-            st.session_state[badge_key] = "manual"
-            st.session_state[state_key] = "done_manual"
-            # Nettoyer les params
-            st.query_params.clear()
-            st.rerun()
-        except Exception:
-            pass
-    elif nova_action == "cancel" and nova_key == instance_prefix:
-        st.query_params.clear()
-        st.session_state["reset_requested"] = True
-        st.rerun()
-
-    # Injecter le listener JS
-    components.html(f"""
-<script>
-window.addEventListener('message', function(e) {{
-  const d = e.data;
-  if (!d || !d.novaRelay) return;
-  const payload = d.payload;
-  const key = '{instance_prefix}';
-  let action, data='';
-  if (payload === 'CANCEL') {{
-    action = 'cancel';
-  }} else if (payload && payload.startsWith('CONFIRM:')) {{
-    action = 'confirm';
-    data = encodeURIComponent(payload.slice(8));
-  }} else return;
-  const url = new URL(window.parent.location.href);
-  url.searchParams.set('nova_action', action);
-  url.searchParams.set('nova_key', key);
-  if (data) url.searchParams.set('nova_data', data);
-  window.parent.location.href = url.toString();
-}});
-</script>
-""", height=0, scrolling=False)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -853,43 +518,38 @@ window.addEventListener('message', function(e) {{
 # ══════════════════════════════════════════════════════════════════════════════
 tab_mobile, tab_import = st.tabs(["📷  Caméra", "🖼️  Importer"])
 
-# ══════════════════════════════════
-# ONGLET 1 — CAMÉRA
-# ══════════════════════════════════
+# ── ONGLET CAMÉRA ─────────────────────────────────────────────────────────────
 with tab_mobile:
     photo = st.file_uploader(
-        label="photo",
-        type=["jpg", "jpeg", "png", "webp", "bmp", "heic"],
-        label_visibility="collapsed",
-        key=f"cam_{sk}",
+        label="photo", type=["jpg","jpeg","png","webp","bmp","heic"],
+        label_visibility="collapsed", key=f"cam_{sk}",
     )
-
     if photo is None:
         import streamlit.components.v1 as components
         components.html("""
         <style>
-          *{box-sizing:border-box;margin:0;padding:0}
-          body{background:transparent;font-family:'Segoe UI',sans-serif}
-          .card{background:rgba(41,121,255,0.07);border:1.5px dashed #2979ff88;border-radius:18px;
-                padding:1.4rem 1rem;margin-bottom:1rem;text-align:center}
-          .icon{font-size:3.5rem;display:block;margin-bottom:.5rem;animation:pulse 2s infinite}
-          @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-          .title{font-size:1.05rem;font-weight:700;color:#fff;margin-bottom:.5rem}
-          .tips{text-align:left;display:inline-block}
-          .tip{font-size:.82rem;color:#a0b4d0;margin:.25rem 0;display:flex;align-items:center;gap:.4rem}
-          .big-btn{display:block;width:100%;background:linear-gradient(135deg,#2979ff,#1a5cd4);color:#fff;
-            border:none;border-radius:16px;padding:1.1rem;font-size:1.15rem;font-weight:700;
-            letter-spacing:1px;cursor:pointer;box-shadow:0 4px 24px rgba(41,121,255,.55);
-            font-family:'Segoe UI',sans-serif;text-align:center;margin-bottom:.8rem;
-            -webkit-tap-highlight-color:transparent;transition:transform .1s,opacity .1s}
-          .big-btn:active{transform:scale(.97);opacity:.9}
-          .badge{display:flex;align-items:center;justify-content:center;gap:.4rem;
-            background:rgba(0,230,118,.08);border:1px solid #00e67644;border-radius:10px;
-            padding:.5rem;font-size:.75rem;color:#00e676;margin-bottom:.8rem}
-          .steps{display:flex;justify-content:center;gap:.4rem;flex-wrap:wrap}
-          .step{background:rgba(41,121,255,.12);border:1px solid #2979ff44;border-radius:20px;
-                padding:4px 12px;font-size:.7rem;color:#7a90b8}
-          .step.active{background:rgba(41,121,255,.3);border-color:#2979ff;color:#fff;font-weight:600}
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{background:transparent;font-family:'Segoe UI',sans-serif}
+        .card{background:rgba(41,121,255,.07);border:1.5px dashed #2979ff88;border-radius:18px;
+              padding:1.4rem 1rem;margin-bottom:1rem;text-align:center}
+        .icon{font-size:3.5rem;display:block;margin-bottom:.5rem;animation:pulse 2s infinite}
+        @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+        .title{font-size:1.05rem;font-weight:700;color:#fff;margin-bottom:.5rem}
+        .tips{text-align:left;display:inline-block}
+        .tip{font-size:.82rem;color:#a0b4d0;margin:.25rem 0;display:flex;align-items:center;gap:.4rem}
+        .big-btn{display:block;width:100%;background:linear-gradient(135deg,#2979ff,#1a5cd4);
+          color:#fff;border:none;border-radius:16px;padding:1.1rem;font-size:1.15rem;font-weight:700;
+          letter-spacing:1px;cursor:pointer;box-shadow:0 4px 24px rgba(41,121,255,.55);
+          font-family:'Segoe UI',sans-serif;text-align:center;margin-bottom:.8rem;
+          -webkit-tap-highlight-color:transparent;transition:transform .1s,opacity .1s}
+        .big-btn:active{transform:scale(.97);opacity:.9}
+        .badge{display:flex;align-items:center;justify-content:center;gap:.4rem;
+          background:rgba(0,230,118,.08);border:1px solid #00e67644;border-radius:10px;
+          padding:.5rem;font-size:.75rem;color:#00e676;margin-bottom:.8rem}
+        .steps{display:flex;justify-content:center;gap:.4rem;flex-wrap:wrap}
+        .step{background:rgba(41,121,255,.12);border:1px solid #2979ff44;border-radius:20px;
+              padding:4px 12px;font-size:.7rem;color:#7a90b8}
+        .step.active{background:rgba(41,121,255,.3);border-color:#2979ff;color:#fff;font-weight:600}
         </style>
         <div class="card">
           <span class="icon">📷</span>
@@ -903,55 +563,40 @@ with tab_mobile:
         <div class="badge">✂️ Recadrage manuel interactif — ajustez les 4 coins</div>
         <button class="big-btn" onclick="openCamera()">📷 &nbsp; Ouvrir l'appareil photo</button>
         <div class="steps">
-          <div class="step active">① Prendre la photo</div>
-          <div class="step">② Ajuster les coins</div>
-          <div class="step">③ Télécharger PDF</div>
+          <div class="step active">① Photo</div>
+          <div class="step">② Ajuster</div>
+          <div class="step">③ PDF</div>
         </div>
         <script>
         function openCamera(){
           try{
-            const inputs=window.parent.document.querySelectorAll('input[type="file"]');
-            for(let inp of inputs){inp.setAttribute('capture','environment');inp.setAttribute('accept','image/*');inp.click();return;}
+            const inp=window.parent.document.querySelector('input[type="file"]');
+            if(inp){inp.setAttribute('capture','environment');inp.setAttribute('accept','image/*');inp.click();return;}
           }catch(e){}
           const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
           inp.setAttribute('capture','environment');inp.click();
         }
         </script>
-        """, height=380, scrolling=False)
+        """, height=390, scrolling=False)
     else:
         img_mob = corriger_orientation(Image.open(photo))
-        inject_message_listener("mob")
         flux_image(img_mob, "nova_scan_document.pdf", "mob")
 
-
-# ══════════════════════════════════
-# ONGLET 2 — IMPORT
-# ══════════════════════════════════
+# ── ONGLET IMPORT ─────────────────────────────────────────────────────────────
 with tab_import:
-    st.markdown("""
-    <div class="tip-box">
-        💡 <strong>Formats acceptés :</strong> JPG, PNG, WEBP, BMP
-    </div>
-    """, unsafe_allow_html=True)
-
+    st.markdown('<div class="tip-box">💡 <strong>Formats :</strong> JPG, PNG, WEBP, BMP</div>',
+                unsafe_allow_html=True)
     fichier = st.file_uploader(
-        label="Choisir une image",
-        type=["jpg", "jpeg", "png", "webp", "bmp"],
-        label_visibility="collapsed",
-        key=f"upload_{sk}",
+        label="Choisir une image", type=["jpg","jpeg","png","webp","bmp"],
+        label_visibility="collapsed", key=f"upload_{sk}",
     )
-
     if fichier is not None:
         img_imp = corriger_orientation(Image.open(fichier))
-        nom_pdf = fichier.name.rsplit(".", 1)[0] + ".pdf"
-        inject_message_listener("imp")
+        nom_pdf = fichier.name.rsplit(".",1)[0]+".pdf"
         flux_image(img_imp, nom_pdf, "imp")
 
-
 # ── FOOTER ────────────────────────────────────────────────────────────────────
-st.markdown("""
-<hr class="sep">
+st.markdown("""<hr class="sep">
 <div style="text-align:center;font-size:.7rem;color:#2e3f5c;">
-    Nova Scan · Module Nova Platform · Traitement 100% en mémoire · Aucun fichier stocké
-</div>
-""", unsafe_allow_html=True)
+Nova Scan · Traitement 100 % en mémoire · Aucun fichier stocké
+</div>""", unsafe_allow_html=True)
