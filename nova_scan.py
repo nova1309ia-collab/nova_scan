@@ -864,14 +864,73 @@ with tab_mobile:
         flux_image(img_mob, "nova_scan_document.pdf", "mob")
 
 with tab_import:
-    st.markdown('<div class="tip-box">💡 <strong>Formats :</strong> JPG, PNG, WEBP, BMP</div>', unsafe_allow_html=True)
-    st.markdown('<div class="uploader-import">', unsafe_allow_html=True)
-    fichier = st.file_uploader(label="Choisir une image", type=["jpg","jpeg","png","webp","bmp"],
-                                label_visibility="collapsed", key=f"upload_{sk}")
-    st.markdown('</div>', unsafe_allow_html=True)
-    if fichier is not None:
-        img_imp = corriger_orientation(Image.open(fichier))
-        flux_image(img_imp, fichier.name.rsplit(".",1)[0]+".pdf", "imp")
+    import streamlit.components.v1 as components
+    components.html("""<!DOCTYPE html><html><head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:transparent;font-family:'DM Sans',sans-serif}
+.premium-card{
+  background:linear-gradient(135deg,rgba(15,25,60,.97) 0%,rgba(25,18,55,.97) 100%);
+  border:1.5px solid rgba(124,58,237,.4);
+  border-radius:20px;padding:1.4rem 1.1rem 1.2rem;
+  position:relative;overflow:hidden;text-align:center;
+}
+.premium-card::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at top center,rgba(124,58,237,.18) 0%,transparent 65%);
+  pointer-events:none;
+}
+.lock-icon{font-size:2.8rem;display:block;margin-bottom:.6rem;filter:drop-shadow(0 0 14px rgba(124,58,237,.6))}
+.premium-title{
+  font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;
+  color:#e8eeff;margin-bottom:.35rem;letter-spacing:.5px;
+}
+.premium-title span{
+  background:linear-gradient(135deg,#c084fc,#7c3aed);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.premium-desc{font-size:.8rem;color:#8a9cc0;line-height:1.55;margin-bottom:1rem}
+.price-box{
+  display:inline-flex;align-items:baseline;gap:5px;
+  background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.35);
+  border-radius:40px;padding:.45rem 1.2rem;margin-bottom:1.1rem;
+}
+.price-amount{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:#c084fc}
+.price-unit{font-size:.72rem;color:#7a6a9a;font-weight:600}
+.features{text-align:left;margin-bottom:1.1rem;display:flex;flex-direction:column;gap:.38rem}
+.feat{display:flex;align-items:center;gap:.55rem;font-size:.77rem;color:#a0b0cc}
+.feat-icon{font-size:.9rem;flex-shrink:0}
+.btn-premium{
+  display:block;width:100%;padding:.75rem 1rem;
+  background:linear-gradient(135deg,#7c3aed,#4f46e5);
+  color:#fff;text-decoration:none;
+  border-radius:14px;font-family:'Syne',sans-serif;
+  font-size:.92rem;font-weight:700;letter-spacing:.8px;
+  box-shadow:0 4px 20px rgba(124,58,237,.5);
+  transition:transform .1s,opacity .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn-premium:active{transform:scale(.97);opacity:.85}
+</style></head><body>
+<div class="premium-card">
+  <span class="lock-icon">🔒</span>
+  <div class="premium-title">Passe à la version <span>Premium</span></div>
+  <div class="premium-desc">L'import d'images depuis ta galerie est réservé aux membres Premium. Débloque cette fonctionnalité et bien plus encore !</div>
+  <div class="price-box">
+    <span class="price-amount">1 000</span>
+    <span class="price-unit">FCFA / mois</span>
+  </div>
+  <div class="features">
+    <div class="feat"><span class="feat-icon">✅</span> Import depuis la galerie (JPG, PNG, WEBP…)</div>
+    <div class="feat"><span class="feat-icon">✅</span> Scanner sans limite de documents</div>
+    <div class="feat"><span class="feat-icon">✅</span> Accès prioritaire aux nouvelles fonctions</div>
+    <div class="feat"><span class="feat-icon">✅</span> Support WhatsApp dédié</div>
+  </div>
+  <a href="https://wa.me/2250171542505?text=Bonjour%2C+je+veux+passer+à+la+version+Premium+de+Nova+Scan+%281000+FCFA%2Fmois%29" target="_blank" class="btn-premium">💬 Passer à Premium via WhatsApp</a>
+</div>
+</body></html>""", height=430, scrolling=False)
 
 st.markdown("""<hr class="sep"><div style="text-align:center;font-size:.7rem;color:#2e3f5c;">
 Nova Scan · Traitement 100 % en mémoire · Aucun fichier stocké</div>""", unsafe_allow_html=True)
