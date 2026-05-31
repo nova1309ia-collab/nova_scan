@@ -1,6 +1,7 @@
 import streamlit as st
 from PIL import Image
 import io
+import base64
 
 st.set_page_config(
     page_title="Nova Scan",
@@ -65,16 +66,6 @@ html, body, [data-testid="stAppViewContainer"] {
     border-color: #2979ff !important;
     color: #2979ff !important;
 }
-[data-testid="stCameraInputButton"] {
-    background-color: #2979ff !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: 50px !important;
-    padding: 0.7rem 2.5rem !important;
-    font-size: 1rem !important;
-    font-weight: 700 !important;
-    box-shadow: 0 0 18px rgba(41,121,255,0.45) !important;
-}
 .preview-label {
     font-size: 0.75rem;
     color: #7a90b8;
@@ -113,19 +104,6 @@ html, body, [data-testid="stAppViewContainer"] {
     color: #fff;
     font-weight: 600;
 }
-.guide-box {
-    border: 2px dashed #2979ff;
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    background: rgba(41,121,255,0.04);
-}
-.guide-text {
-    text-align: center;
-    font-size: 0.8rem;
-    color: #2979ff;
-    font-weight: 600;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -136,13 +114,17 @@ st.markdown('<div class="nova-subtitle">Numérisation instantanée · Zéro inst
 if st.session_state.get("reset_requested"):
     st.session_state["reset_requested"] = False
     st.session_state["scan_key"] = st.session_state.get("scan_key", 0) + 1
+    st.session_state["img_b64"] = None
 
 if "scan_key" not in st.session_state:
     st.session_state["scan_key"] = 0
+if "img_b64" not in st.session_state:
+    st.session_state["img_b64"] = None
+
 sk = st.session_state["scan_key"]
 
 
-# ── Correction orientation EXIF (photos mobile) ──────────────────────────────
+# ── Correction orientation EXIF ───────────────────────────────────────────────
 def corriger_orientation(img):
     try:
         from PIL import ExifTags
@@ -159,15 +141,9 @@ def corriger_orientation(img):
     return img
 
 
-# ── Conversion image → PDF bytes (100% Pillow, zéro dépendance externe) ──────
+# ── Conversion image → PDF ────────────────────────────────────────────────────
 def image_vers_pdf(img):
-    """
-    Pillow peut sauvegarder directement en PDF depuis la version 2.x.
-    C'est la méthode la plus fiable sur Streamlit Cloud.
-    img2pdf est évité car il rejette certains JPEG mobiles (profil ICC, DPI, etc.)
-    """
     img = corriger_orientation(img)
-    # Forcer RGB — PDF Pillow n'accepte pas RGBA/P/LA
     if img.mode != "RGB":
         img = img.convert("RGB")
     buf = io.BytesIO()
@@ -177,13 +153,8 @@ def image_vers_pdf(img):
 
 
 # ── Affichage résultat ────────────────────────────────────────────────────────
-def afficher_resultat(raw_file_or_image, nom_fichier, key_dl, key_btn, is_pil=False):
+def afficher_resultat(img, nom_fichier, key_dl, key_btn):
     try:
-        if is_pil:
-            img = raw_file_or_image
-        else:
-            img = Image.open(raw_file_or_image)
-
         pdf_bytes, img_rgb = image_vers_pdf(img)
         w, h = img_rgb.size
         taille_ko = len(pdf_bytes) / 1024
@@ -213,7 +184,6 @@ def afficher_resultat(raw_file_or_image, nom_fichier, key_dl, key_btn, is_pil=Fa
             mime="application/pdf",
             key=key_dl,
         )
-
     except Exception as e:
         st.error(f"Erreur lors de la génération du PDF : {e}")
 
@@ -224,10 +194,7 @@ def afficher_resultat(raw_file_or_image, nom_fichier, key_dl, key_btn, is_pil=Fa
 
 
 # ── ONGLETS ───────────────────────────────────────────────────────────────────
-tab_mobile, tab_import = st.tabs([
-    "📷  Caméra",
-    "🖼️  Importer"
-])
+tab_mobile, tab_import = st.tabs(["📷  Caméra", "🖼️  Importer"])
 
 
 # ══════════════════════════════════
@@ -235,94 +202,76 @@ tab_mobile, tab_import = st.tabs([
 # ══════════════════════════════════
 with tab_mobile:
 
-    # Récupération base64 envoyé par le composant HTML
-    b64_key = f"img_b64_{sk}"
-    b64_val = st.query_params.get(b64_key, None)
+    # ── Si une image a déjà été capturée, on l'affiche ────────────────────────
+    if st.session_state["img_b64"]:
+        try:
+            header, data = st.session_state["img_b64"].split(",", 1)
+            img_bytes = base64.b64decode(data)
+            img_mob = Image.open(io.BytesIO(img_bytes))
+            afficher_resultat(img_mob, "nova_scan_document.pdf", f"dl_mob_{sk}", f"btn_reset_mob_{sk}")
+        except Exception as e:
+            st.error(f"Erreur lecture image : {e}")
+            if st.button("🔄 Réessayer", key=f"btn_retry_mob_{sk}"):
+                st.session_state["reset_requested"] = True
+                st.rerun()
 
-    # Champ texte caché — reçoit le base64 via JS
-    b64_input = st.text_input("b64", key=b64_key, label_visibility="collapsed")
+    else:
+        # ── Bouton caméra via file_uploader natif (accept="image/*" + capture) ─
+        # On utilise st.camera_input ou file_uploader selon les besoins
+        # La vraie solution mobile : file_uploader avec accept image/*
+        # capture="environment" n'est pas supporté nativement par Streamlit
+        # donc on utilise un composant HTML qui écrit dans session_state via query_params
 
-    if not b64_input:
-        import streamlit.components.v1 as components
-        components.html(f"""
-        <style>
-            body {{ margin:0; background:transparent; }}
-            #cam-input {{ display:none; }}
-            .scan-btn {{
-                display: block;
-                width: 100%;
-                background: linear-gradient(135deg, #2979ff, #1a5cd4);
-                color: #fff;
-                border: none;
-                border-radius: 16px;
-                padding: 1.2rem;
-                font-size: 1.15rem;
-                font-weight: 700;
-                letter-spacing: 1px;
-                cursor: pointer;
-                box-shadow: 0 4px 24px rgba(41,121,255,0.5);
-                font-family: 'Segoe UI', sans-serif;
-                text-align: center;
-            }}
-            .scan-btn:active {{ opacity: 0.85; transform: scale(0.98); }}
-            .hint {{
-                text-align: center;
-                font-size: 0.78rem;
-                color: #7a90b8;
-                margin-top: 0.8rem;
-                font-family: 'Segoe UI', sans-serif;
-            }}
-        </style>
+        # ── APPROCHE FIABLE : stocker le b64 dans l'URL (query params) ─────────
+        # Le composant JS envoie le b64 en morceaux via window.location (trop gros)
+        # → Meilleure approche : utiliser st.file_uploader caché + JS trigger
 
-        <label for="cam-input">
-            <div class="scan-btn">📷 &nbsp; Scanner un document</div>
-        </label>
-        <input id="cam-input" type="file" accept="image/*" capture="environment"
-               onchange="handlePhoto(this)">
-        <div class="hint">Ouvre directement l'appareil photo</div>
-
-        <script>
-        function handlePhoto(input) {{
-            if (!input.files || !input.files[0]) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {{
-                const b64 = e.target.result; // data:image/...;base64,...
-                // Envoyer vers Streamlit via le champ texte caché
-                const stInputs = window.parent.document.querySelectorAll('input[type="text"]');
-                for (let inp of stInputs) {{
-                    if (inp.value === '' || inp.getAttribute('aria-label') === 'b64') {{
-                        inp.value = b64;
-                        inp.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                        break;
-                    }}
-                }}
-            }};
-            reader.readAsDataURL(input.files[0]);
-        }}
-        </script>
-        """, height=130, scrolling=False)
+        # ── SOLUTION FINALE : file_uploader Streamlit natif avec capture ────────
+        # On injecte l'attribut capture="environment" via JS après le rendu
 
         st.markdown("""
-        <div class="steps-row" style="margin-top:1rem;">
+        <div class="steps-row" style="margin-top:0.5rem;">
             <div class="step-badge step-active">① Scanner</div>
             <div class="step-badge">② Générer</div>
             <div class="step-badge">③ Télécharger</div>
         </div>
         """, unsafe_allow_html=True)
 
-    else:
-        # Décoder le base64 reçu
-        try:
-            import base64, re
-            header, data = b64_input.split(",", 1)
-            img_bytes = base64.b64decode(data)
-            img_mob = Image.open(io.BytesIO(img_bytes))
-            afficher_resultat(img_mob, "nova_scan_document.pdf", "dl_mob", "btn_reset_mob", is_pil=True)
-        except Exception as e:
-            st.error(f"Erreur lecture image : {e}")
-            if st.button("🔄 Réessayer", key="btn_retry_mob"):
-                st.session_state["reset_requested"] = True
-                st.rerun()
+        # file_uploader natif — Streamlit gère parfaitement l'upload sur mobile
+        photo = st.file_uploader(
+            label="📷 Prendre ou importer une photo",
+            type=["jpg", "jpeg", "png", "webp", "bmp", "heic"],
+            accept_multiple_files=False,
+            key=f"cam_upload_{sk}",
+            help="Sur mobile : ouvre la caméra ou la galerie"
+        )
+
+        # JS : injecter capture="environment" sur l'input file pour ouvrir directement la caméra
+        import streamlit.components.v1 as components
+        components.html("""
+        <script>
+        // Attendre que le DOM soit prêt, puis injecter capture="environment"
+        function injectCapture() {
+            // Cherche l'input file dans le parent (même origine sur Streamlit Cloud)
+            const inputs = window.parent.document.querySelectorAll('input[type="file"]');
+            inputs.forEach(function(inp) {
+                // Cibler uniquement le file uploader de l'onglet caméra
+                if (!inp.hasAttribute('capture')) {
+                    inp.setAttribute('capture', 'environment');
+                    inp.setAttribute('accept', 'image/*');
+                }
+            });
+        }
+        // Réessayer plusieurs fois car Streamlit charge le DOM de façon asynchrone
+        setTimeout(injectCapture, 300);
+        setTimeout(injectCapture, 800);
+        setTimeout(injectCapture, 1500);
+        </script>
+        """, height=0)
+
+        if photo is not None:
+            img_mob = Image.open(photo)
+            afficher_resultat(img_mob, "nova_scan_document.pdf", f"dl_mob_{sk}", f"btn_reset_mob_{sk}")
 
 
 # ══════════════════════════════════
@@ -345,7 +294,7 @@ with tab_import:
     if fichier is not None:
         img_imp = Image.open(fichier)
         nom_pdf = fichier.name.rsplit(".", 1)[0] + ".pdf"
-        afficher_resultat(img_imp, nom_pdf, "dl_import", "btn_reset_import", is_pil=True)
+        afficher_resultat(img_imp, nom_pdf, f"dl_import_{sk}", f"btn_reset_import_{sk}")
 
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────
