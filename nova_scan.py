@@ -262,6 +262,100 @@ div[data-testid="stTextInput"]{display:none!important}
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* ── Bandeau Apps Nova ── */
+.nova-apps-banner{
+  background: linear-gradient(135deg, rgba(15,25,60,.95) 0%, rgba(20,35,80,.95) 100%);
+  border: 1px solid rgba(77,138,255,.3);
+  border-radius: 20px;
+  padding: 1.2rem 1rem 1rem;
+  margin: 1.4rem 0 .8rem;
+  position: relative;
+  overflow: hidden;
+}
+.nova-apps-banner::before{
+  content:'';
+  position:absolute;inset:0;
+  background: radial-gradient(ellipse at top right, rgba(77,138,255,.12) 0%, transparent 65%);
+  pointer-events:none;
+}
+.nova-apps-banner-title{
+  font-family:'Syne',sans-serif;
+  font-size:.72rem;
+  font-weight:700;
+  color:rgba(77,138,255,.7);
+  letter-spacing:2.5px;
+  text-transform:uppercase;
+  text-align:center;
+  margin-bottom:.9rem;
+}
+.nova-apps-grid{
+  display:flex;
+  gap:.7rem;
+  flex-direction:column;
+}
+.nova-app-card{
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(77,138,255,.2);
+  border-radius: 14px;
+  padding: .85rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+  text-decoration: none !important;
+  transition: border-color .2s, background .2s, transform .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.nova-app-card:hover{
+  border-color: rgba(77,138,255,.55);
+  background: rgba(77,138,255,.07);
+  transform: translateY(-1px);
+}
+.nova-app-card:active{ transform: scale(.98); }
+.nova-app-icon{
+  width: 46px; height: 46px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+.icon-platform{ background: linear-gradient(135deg, #1a3f9f, #2979ff); }
+.icon-agency{   background: linear-gradient(135deg, #4a1fa8, #7c3aed); }
+.nova-app-body{ flex: 1; min-width: 0; }
+.nova-app-name{
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: .92rem;
+  color: #e8eeff;
+  margin-bottom: .18rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nova-app-desc{
+  font-size: .74rem;
+  color: #7a90b8;
+  line-height: 1.45;
+}
+.nova-app-badge{
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.badge-free-green{
+  background: rgba(0,230,118,.1);
+  border: 1px solid rgba(0,230,118,.35);
+  color: #00e676;
+}
+.badge-free-violet{
+  background: rgba(124,58,237,.15);
+  border: 1px solid rgba(124,58,237,.4);
+  color: #c084fc;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -327,12 +421,6 @@ def detecter_contour_auto(img_pil):
         return None
 
 def recadrer_depuis_coins(img_pil, coins, mode="couleur"):
-    """
-    Recadre la perspective et applique le traitement selon le mode :
-    - 'couleur'  : image couleur recadrée, légèrement améliorée
-    - 'gris'     : niveaux de gris, contraste amélioré
-    - 'nb'       : noir & blanc (binarisation adaptative) pour documents texte
-    """
     import cv2
     img_np = np.array(img_pil.convert("RGB"))
     pts = np.array(coins, dtype=np.float32)
@@ -351,25 +439,52 @@ def recadrer_depuis_coins(img_pil, coins, mode="couleur"):
         return Image.fromarray(clean).convert("RGB")
     elif mode == "gris":
         gray=cv2.cvtColor(warped,cv2.COLOR_RGB2GRAY)
-        # Améliore le contraste
         pil_gray = Image.fromarray(gray)
         pil_gray = ImageEnhance.Contrast(pil_gray).enhance(1.4)
         return pil_gray.convert("RGB")
-    else:  # couleur
+    else:
         pil_color = Image.fromarray(warped)
-        # Légère amélioration couleur
         pil_color = ImageEnhance.Contrast(pil_color).enhance(1.2)
         pil_color = ImageEnhance.Sharpness(pil_color).enhance(1.3)
         return pil_color
 
 def image_vers_pdf(img):
-    """Convertit en PDF — PAS de correction EXIF ici (déjà faite à l'ouverture)."""
     if img.mode != "RGB":
         img = img.convert("RGB")
     buf = io.BytesIO()
     img.save(buf, format="PDF", resolution=150)
     buf.seek(0)
     return buf.getvalue(), img
+
+
+# ── Bandeau Apps Nova ─────────────────────────────────────────────────────────
+def afficher_bandeau_apps():
+    st.markdown("""
+<div class="nova-apps-banner">
+  <div class="nova-apps-banner-title">✦ Découvrez aussi nos autres apps Nova ✦</div>
+  <div class="nova-apps-grid">
+
+    <a href="https://dawn-flower-c012.mypublic1309.workers.dev/" target="_blank" class="nova-app-card">
+      <div class="nova-app-icon icon-platform">🤖</div>
+      <div class="nova-app-body">
+        <div class="nova-app-name">Nova Platform</div>
+        <div class="nova-app-desc">Génère tes CV, exposés, rapports et documents scolaires grâce à l'IA — en quelques secondes.</div>
+      </div>
+      <span class="nova-app-badge badge-free-green">GRATUIT</span>
+    </a>
+
+    <a href="https://aged-term-0d2e.nova1309ia.workers.dev/" target="_blank" class="nova-app-card">
+      <div class="nova-app-icon icon-agency">🛠️</div>
+      <div class="nova-app-body">
+        <div class="nova-app-name">Nova Conception</div>
+        <div class="nova-app-desc">Crée ton site web ou ton application mobile professionnelle — sans coder, gratuitement.</div>
+      </div>
+      <span class="nova-app-badge badge-free-violet">GRATUIT</span>
+    </a>
+
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
 
 # ── Canvas interactif ─────────────────────────────────────────────────────────
@@ -540,6 +655,10 @@ def afficher_resultat(img, nom_fichier, badge_mode, key_dl, key_btn):
         </div>""", unsafe_allow_html=True)
         st.download_button(label="⬇️  TÉLÉCHARGER LE PDF", data=pdf_bytes,
                            file_name=nom_fichier, mime="application/pdf", key=key_dl)
+
+        # ── Bandeau Apps Nova (affiché après le téléchargement) ──
+        afficher_bandeau_apps()
+
     except Exception as e:
         st.error(f"Erreur PDF : {e}")
 
@@ -563,7 +682,6 @@ def flux_image(img_pil, nom_pdf, prefix):
     mode_key    = f"mode_{prefix}"
     relay_key   = f"_relay_{prefix}_{sk_local}"
 
-    # Persister l'image UNE SEULE FOIS en PNG lossless
     if img_b64_key not in st.session_state:
         st.session_state[img_b64_key] = img_to_b64(img_pil)
         st.session_state[nom_key] = nom_pdf
@@ -571,7 +689,6 @@ def flux_image(img_pil, nom_pdf, prefix):
     if state_key not in st.session_state:
         st.session_state[state_key] = "detecting"
 
-    # Recharger depuis la session (résiste aux reruns)
     img_pil = b64_to_img(st.session_state[img_b64_key])
     nom_pdf = st.session_state[nom_key]
     state   = st.session_state[state_key]
@@ -602,7 +719,6 @@ def flux_image(img_pil, nom_pdf, prefix):
             st.markdown('<div class="tip-box">💡 Document non détecté. Placez les coins manuellement.</div>',
                         unsafe_allow_html=True)
 
-        # Choix du mode de rendu
         st.markdown("<div style='font-size:.78rem;color:#7a90b8;margin-bottom:.4rem;'>Mode de rendu :</div>",
                     unsafe_allow_html=True)
         mode = st.radio("Mode", ["🎨 Couleur", "🌫️ Niveaux de gris", "📄 Noir & Blanc"],
