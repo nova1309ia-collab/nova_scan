@@ -12,37 +12,234 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-html,body,[data-testid="stAppViewContainer"]{background-color:#050d1a;color:#e0e8ff;font-family:'Segoe UI',sans-serif}
-[data-testid="stHeader"]{display:none}
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
+
+:root{
+  --bg:#050d1a;
+  --bg2:#08132b;
+  --blue:#2979ff;
+  --blue-dim:rgba(41,121,255,.18);
+  --blue-glow:rgba(41,121,255,.35);
+  --cyan:#00e5ff;
+  --green:#00e676;
+  --amber:#ffc107;
+  --text:#dce8ff;
+  --muted:#6a82a8;
+  --card:rgba(255,255,255,.03);
+  --border:rgba(41,121,255,.18);
+  --radius:16px;
+}
+
+/* ── Base ── */
+html,body,[data-testid="stAppViewContainer"]{
+  background-color:var(--bg)!important;
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+}
+[data-testid="stHeader"],[data-testid="stToolbar"],[data-testid="stDecoration"]{display:none!important}
 [data-testid="stFileUploader"]{display:none!important}
-.nova-title{text-align:center;font-size:2rem;font-weight:700;color:#2979ff;margin-bottom:.2rem;letter-spacing:2px}
-.nova-subtitle{text-align:center;font-size:.85rem;color:#7a90b8;margin-bottom:1.8rem;letter-spacing:1px;text-transform:uppercase}
-.pdf-info{background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.2);border-radius:10px;padding:1rem 1.2rem;margin:1rem 0;font-size:.85rem}
-.pdf-info span{color:#00e5ff;font-weight:600}
-.badge-crop{display:inline-block;background:rgba(0,230,118,.12);border:1px solid #00e676;border-radius:20px;padding:3px 12px;font-size:.72rem;color:#00e676;margin-left:8px}
-.badge-manual{display:inline-block;background:rgba(41,121,255,.15);border:1px solid #2979ff;border-radius:20px;padding:3px 12px;font-size:.72rem;color:#82b1ff;margin-left:8px}
-.badge-no-crop{display:inline-block;background:rgba(255,193,7,.12);border:1px solid #ffc107;border-radius:20px;padding:3px 12px;font-size:.72rem;color:#ffc107;margin-left:8px}
-[data-testid="stDownloadButton"]>button{background-color:#2979ff!important;color:white!important;border:none!important;border-radius:14px!important;font-weight:700!important;font-size:1.1rem!important;padding:.9rem 2rem!important;width:100%!important;letter-spacing:1px!important;box-shadow:0 4px 20px rgba(41,121,255,.4)!important}
-[data-testid="stButton"]>button{background:transparent!important;border:1px solid #2979ff55!important;color:#7a90b8!important;border-radius:8px!important;width:100%!important;margin-top:.5rem!important}
-.preview-label{font-size:.75rem;color:#7a90b8;text-align:center;margin-bottom:.3rem}
-.sep{border:none;border-top:1px solid #0d1e38;margin:1.5rem 0}
-.tip-box{background:rgba(255,193,7,.06);border-left:3px solid #ffc107;border-radius:0 8px 8px 0;padding:.7rem 1rem;font-size:.78rem;color:#c9a227;margin-bottom:1rem}
-.steps-row{display:flex;justify-content:center;gap:.5rem;margin-bottom:1.2rem;flex-wrap:wrap}
-.step-badge{background:rgba(41,121,255,.12);border:1px solid #2979ff44;border-radius:20px;padding:4px 14px;font-size:.72rem;color:#7a90b8;white-space:nowrap}
-.step-active{background:rgba(41,121,255,.3);border-color:#2979ff;color:#fff;font-weight:600}
 div[data-testid="stTextInput"]{display:none!important}
-/* Mode selector */
-.mode-row{display:flex;gap:8px;margin-bottom:1rem}
-.mode-btn{flex:1;padding:10px 6px;border-radius:12px;font-size:.8rem;font-weight:600;cursor:pointer;
-  border:1.5px solid #2979ff44;background:rgba(41,121,255,.07);color:#7a90b8;
-  font-family:'Segoe UI',sans-serif;transition:all .15s;text-align:center}
-.mode-btn.active{background:rgba(41,121,255,.25);border-color:#2979ff;color:#fff}
-[data-testid="stRadio"]>div{display:flex;gap:8px;flex-direction:row!important}
-[data-testid="stRadio"] label{flex:1;background:rgba(41,121,255,.07);border:1.5px solid #2979ff44;
-  border-radius:12px;padding:10px 6px;text-align:center;cursor:pointer;font-size:.8rem;
-  font-weight:600;color:#7a90b8;transition:all .15s}
-[data-testid="stRadio"] label:has(input:checked){background:rgba(41,121,255,.25);border-color:#2979ff;color:#fff}
-[data-testid="stRadio"] input{display:none}
+
+/* Remove default padding on mobile */
+.block-container{padding:1rem .8rem 2rem!important;max-width:480px!important}
+@media(max-width:480px){.block-container{padding:.75rem .6rem 2rem!important}}
+
+/* ── Header ── */
+.nova-title{
+  text-align:center;
+  font-family:'Syne',sans-serif;
+  font-size:2.1rem;
+  font-weight:800;
+  background:linear-gradient(135deg,#6ea8ff 0%,#2979ff 50%,#00b4ff 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:.15rem;
+  letter-spacing:3px;
+  filter:drop-shadow(0 0 18px rgba(41,121,255,.4));
+}
+.nova-subtitle{
+  text-align:center;
+  font-size:.75rem;
+  color:var(--muted);
+  margin-bottom:1.6rem;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  font-weight:500;
+}
+
+/* ── Tabs ── */
+[data-testid="stTabs"] [role="tablist"]{
+  background:var(--bg2)!important;
+  border-radius:14px!important;
+  padding:4px!important;
+  border:1px solid var(--border)!important;
+  gap:4px!important;
+}
+[data-testid="stTabs"] [role="tab"]{
+  border-radius:10px!important;
+  font-family:'DM Sans',sans-serif!important;
+  font-weight:600!important;
+  font-size:.88rem!important;
+  color:var(--muted)!important;
+  padding:.55rem 1rem!important;
+  transition:all .2s!important;
+}
+[data-testid="stTabs"] [role="tab"][aria-selected="true"]{
+  background:var(--blue-dim)!important;
+  color:#fff!important;
+  box-shadow:0 0 16px var(--blue-glow)!important;
+}
+[data-testid="stTabs"] [role="tab"]:focus{box-shadow:none!important}
+[data-testid="stTabContent"]{padding-top:.8rem!important}
+
+/* ── Cards / Info boxes ── */
+.pdf-info{
+  background:rgba(0,229,255,.05);
+  border:1px solid rgba(0,229,255,.18);
+  border-radius:var(--radius);
+  padding:1rem 1.1rem;
+  margin:1rem 0;
+  font-size:.84rem;
+  line-height:1.7;
+}
+.pdf-info span{color:var(--cyan);font-weight:600}
+
+.tip-box{
+  background:rgba(255,193,7,.05);
+  border-left:3px solid var(--amber);
+  border-radius:0 12px 12px 0;
+  padding:.75rem 1rem;
+  font-size:.8rem;
+  color:#c9a227;
+  margin-bottom:1rem;
+}
+
+/* ── Badges ── */
+.badge-crop,.badge-manual,.badge-no-crop{
+  display:inline-flex;align-items:center;gap:4px;
+  border-radius:20px;padding:3px 12px;
+  font-size:.72rem;font-weight:600;margin-left:6px;
+}
+.badge-crop{background:rgba(0,230,118,.1);border:1px solid var(--green);color:var(--green)}
+.badge-manual{background:rgba(41,121,255,.12);border:1px solid var(--blue);color:#82b1ff}
+.badge-no-crop{background:rgba(255,193,7,.1);border:1px solid var(--amber);color:var(--amber)}
+
+/* ── Step indicators ── */
+.steps-row{
+  display:flex;justify-content:center;
+  gap:.4rem;margin-bottom:1.1rem;flex-wrap:wrap;
+}
+.step-badge{
+  background:rgba(41,121,255,.08);
+  border:1px solid rgba(41,121,255,.2);
+  border-radius:30px;
+  padding:5px 14px;
+  font-size:.72rem;
+  color:var(--muted);
+  white-space:nowrap;
+  font-weight:500;
+}
+.step-active{
+  background:rgba(41,121,255,.22);
+  border-color:var(--blue);
+  color:#fff;
+  font-weight:700;
+  box-shadow:0 0 10px rgba(41,121,255,.3);
+}
+
+/* ── Buttons ── */
+[data-testid="stDownloadButton"]>button{
+  background:linear-gradient(135deg,#2979ff,#1565c0)!important;
+  color:#fff!important;
+  border:none!important;
+  border-radius:var(--radius)!important;
+  font-family:'Syne',sans-serif!important;
+  font-weight:700!important;
+  font-size:1.05rem!important;
+  padding:1rem 2rem!important;
+  width:100%!important;
+  letter-spacing:1.5px!important;
+  box-shadow:0 4px 24px var(--blue-glow)!important;
+  transition:transform .15s,box-shadow .15s!important;
+  -webkit-tap-highlight-color:transparent!important;
+  min-height:56px!important;
+}
+[data-testid="stDownloadButton"]>button:active{
+  transform:scale(.97)!important;
+  box-shadow:0 2px 12px var(--blue-glow)!important;
+}
+[data-testid="stButton"]>button{
+  background:rgba(255,255,255,.03)!important;
+  border:1px solid rgba(41,121,255,.3)!important;
+  color:var(--muted)!important;
+  border-radius:12px!important;
+  width:100%!important;
+  margin-top:.6rem!important;
+  font-family:'DM Sans',sans-serif!important;
+  font-size:.9rem!important;
+  min-height:48px!important;
+  transition:all .15s!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+[data-testid="stButton"]>button:hover{
+  border-color:var(--blue)!important;
+  color:#aac4ff!important;
+}
+
+/* ── Radio (mode selector) ── */
+[data-testid="stRadio"]>div{
+  display:flex!important;
+  flex-direction:row!important;
+  gap:6px!important;
+  flex-wrap:nowrap!important;
+}
+[data-testid="stRadio"] label{
+  flex:1!important;
+  background:rgba(41,121,255,.06)!important;
+  border:1.5px solid rgba(41,121,255,.2)!important;
+  border-radius:12px!important;
+  padding:10px 4px!important;
+  text-align:center!important;
+  cursor:pointer!important;
+  font-size:.78rem!important;
+  font-weight:600!important;
+  color:var(--muted)!important;
+  transition:all .15s!important;
+  min-height:46px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+[data-testid="stRadio"] label:has(input:checked){
+  background:rgba(41,121,255,.22)!important;
+  border-color:var(--blue)!important;
+  color:#fff!important;
+  box-shadow:0 0 12px rgba(41,121,255,.25)!important;
+}
+[data-testid="stRadio"] input{display:none!important}
+
+/* ── Image preview ── */
+.preview-label{
+  font-size:.72rem;
+  color:var(--muted);
+  text-align:center;
+  margin-bottom:.4rem;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  font-weight:500;
+}
+[data-testid="stImage"]{border-radius:var(--radius);overflow:hidden}
+
+/* ── Separator ── */
+.sep{border:none;border-top:1px solid rgba(41,121,255,.1);margin:1.4rem 0}
+
+/* ── Spinner ── */
+[data-testid="stSpinner"] p{color:var(--muted)!important;font-size:.85rem!important}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 </style>
 """, unsafe_allow_html=True)
 
