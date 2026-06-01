@@ -577,6 +577,8 @@ def afficher_canvas(img_pil, coins_initiales, prefix, sk_local):
     st.session_state[f"canvas_sy_{prefix}_{sk_local}"] = sy
 
     coins_json_key = f"canvas_coins_json_{prefix}_{sk_local}"
+    # Toujours initialiser avec les coins courants (détectés ou par défaut)
+    # afin que le fallback Python ait toujours des coords valides
     if coins_json_key not in st.session_state:
         st.session_state[coins_json_key] = json.dumps(cd)
 
@@ -584,8 +586,15 @@ def afficher_canvas(img_pil, coins_initiales, prefix, sk_local):
     relay_val = st.text_input("_coins_", key=relay_key, label_visibility="collapsed",
                                value=st.session_state[coins_json_key])
 
-    if relay_val and relay_val != st.session_state.get(coins_json_key):
-        st.session_state[coins_json_key] = relay_val
+    # Mettre à jour même si la valeur semble identique en surface
+    # (le relay peut contenir les coords modifiées par l'utilisateur)
+    if relay_val:
+        try:
+            parsed_relay = json.loads(relay_val)
+            if isinstance(parsed_relay, list) and len(parsed_relay) == 4:
+                st.session_state[coins_json_key] = relay_val
+        except Exception:
+            pass
 
     html = f"""<!DOCTYPE html><html><head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -651,16 +660,30 @@ function hit(p){{
 function sendCoins(){{
   const disp=coins.map(c=>[Math.round(c.x),Math.round(c.y)]);
   const val=JSON.stringify(disp);
+  /* ── Méthode 1 : cibler via aria-label ── */
   try{{
     const doc=window.parent.document;
-    let inp=null;
+    const nativeSetter=Object.getOwnPropertyDescriptor(
+      window.parent.HTMLInputElement.prototype,'value').set;
+    let sent=false;
     for(const el of doc.querySelectorAll('input[type="text"]')){{
-      if(el.getAttribute('aria-label')=='_coins_'){{inp=el;break;}}
+      if(el.getAttribute('aria-label')==='_coins_'){{
+        nativeSetter.call(el,val);
+        el.dispatchEvent(new Event('input',{{bubbles:true}}));
+        sent=true; break;
+      }}
     }}
-    if(!inp)return;
-    Object.getOwnPropertyDescriptor(window.parent.HTMLInputElement.prototype,'value')
-      .set.call(inp,val);
-    inp.dispatchEvent(new Event('input',{{bubbles:true}}));
+    /* ── Méthode 2 : fallback — envoyer à tous les text inputs cachés ── */
+    if(!sent){{
+      for(const el of doc.querySelectorAll('input[type="text"]')){{
+        const style=window.parent.getComputedStyle(
+          el.closest('[data-testid="stTextInput"]')||el);
+        if(style.display==='none'||style.visibility==='hidden'){{
+          nativeSetter.call(el,val);
+          el.dispatchEvent(new Event('input',{{bubbles:true}}));
+        }}
+      }}
+    }}
   }}catch(e){{}}
 }}
 cv.addEventListener('mousedown',e=>{{e.preventDefault();drag=hit(gp(e));draw();}});
@@ -783,22 +806,30 @@ def flux_image(img_pil, nom_pdf, prefix):
         with col2:
             if st.button("✅ Recadrer & Générer PDF", key=f"confirm_{prefix}_{sk_local}", use_container_width=True):
                 raw = st.session_state.get(coins_json_key, "")
+                sx_val = st.session_state.get(f"canvas_sx_{prefix}_{sk_local}", 1.0)
+                sy_val = st.session_state.get(f"canvas_sy_{prefix}_{sk_local}", 1.0)
+                corners_ok = False
                 try:
-                    parsed = json.loads(raw)
-                    sx_key = f"canvas_sx_{prefix}_{sk_local}"
-                    sy_key = f"canvas_sy_{prefix}_{sk_local}"
-                    sx_val = st.session_state.get(sx_key, 1.0)
-                    sy_val = st.session_state.get(sy_key, 1.0)
+                    parsed = json.loads(raw) if raw else None
                     if parsed and isinstance(parsed[0], list) and len(parsed) == 4:
+                        # Les coords du canvas sont en pixels d'affichage → repasser en pixels originaux
                         corners_orig = [[round(p[0] * sx_val), round(p[1] * sy_val)] for p in parsed]
-                        st.session_state[corners_key] = corners_orig
-                        st.session_state[badge_key] = "manual"
-                    else:
-                        st.session_state[corners_key] = coins
-                        st.session_state[badge_key] = "auto"
+                        # Sanity check : les coins doivent être dans les dimensions de l'image
+                        w_orig, h_orig = img_pil.size
+                        valid = all(
+                            0 <= c[0] <= w_orig and 0 <= c[1] <= h_orig
+                            for c in corners_orig
+                        )
+                        if valid:
+                            st.session_state[corners_key] = corners_orig
+                            st.session_state[badge_key] = "manual"
+                            corners_ok = True
                 except Exception:
+                    pass
+                if not corners_ok:
+                    # Fallback : utiliser les coins auto-détectés (déjà en coords originaux)
                     st.session_state[corners_key] = coins
-                    st.session_state[badge_key] = "auto"
+                    st.session_state[badge_key] = "auto" if coins else "none"
                 st.session_state[state_key] = "result"
                 st.rerun()
 
