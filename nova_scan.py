@@ -634,66 +634,252 @@ def afficher_canvas(img_pil, coins_initiales, prefix, sk_local):
 <style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{background:#050d1a;padding:2px;font-family:'Segoe UI',sans-serif}}
-canvas{{display:block;width:100%;border-radius:10px;touch-action:none;cursor:crosshair}}
-.hint{{text-align:center;font-size:.73rem;color:#3a5070;margin-top:6px}}
+canvas{{display:block;width:100%;border-radius:10px;touch-action:none}}
+.hint{{text-align:center;font-size:.72rem;color:#3a5070;margin-top:5px;line-height:1.5}}
 </style></head><body>
 <canvas id="cv"></canvas>
-<div class="hint">Glissez les 4 coins 🔵 sur les bords du document</div>
+<div class="hint">⬛ Glisser l'intérieur pour déplacer &nbsp;·&nbsp; 🔵 Poignées pour redimensionner &nbsp;·&nbsp; 🔄 Rotation en haut</div>
 <script>
-const IW={wd},IH={hd},SX={sx},SY={sy};
+const IW={wd}, IH={hd};
 const INIT={json.dumps(cd)};
 const cv=document.getElementById('cv');
 const ctx=cv.getContext('2d');
 cv.width=IW; cv.height=IH;
 const img=new Image(); img.src='data:image/jpeg;base64,{b64}';
-let coins=INIT.map(c=>({{x:c[0],y:c[1]}}));
-let drag=null;
-const R=Math.max(18,Math.min(IW,IH)*.045);
-img.onload=()=>{{draw();sendCoins();}}
+
+/* ── Rectangle state ── */
+/* cx,cy = centre ; w,h = demi-largeur/hauteur ; angle = radians */
+function initFromCorners(pts){{
+  const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]);
+  const x0=Math.min(...xs),x1=Math.max(...xs);
+  const y0=Math.min(...ys),y1=Math.max(...ys);
+  return {{cx:(x0+x1)/2, cy:(y0+y1)/2, hw:(x1-x0)/2, hh:(y1-y0)/2, angle:0}};
+}}
+let R=initFromCorners(INIT);
+
+/* ── Drag state ── */
+/* mode: null | 'move' | 'resize-NW'|'NE'|'SE'|'SW' | 'resize-N'|'S'|'E'|'W' | 'rotate' */
+let drag=null, dragStart=null, snapR=null;
+
+const HR=Math.max(16, Math.min(IW,IH)*.038); /* handle radius */
+const ROT_DIST=HR*2.8;                         /* rotation handle offset from top edge */
+
+/* ── Corners & handles in world space ── */
+function corners(){{
+  const cos=Math.cos(R.angle), sin=Math.sin(R.angle);
+  const rot=(lx,ly)=>{{
+    return {{x: R.cx + lx*cos - ly*sin,
+             y: R.cy + lx*sin + ly*cos}};
+  }};
+  return {{
+    TL:rot(-R.hw,-R.hh), TR:rot( R.hw,-R.hh),
+    BR:rot( R.hw, R.hh), BL:rot(-R.hw, R.hh),
+    N: rot(0,-R.hh), S: rot(0, R.hh),
+    E: rot( R.hw,0), W: rot(-R.hw,0),
+    ROT: rot(0,-R.hh-ROT_DIST)
+  }};
+}}
+
+/* ── Draw ── */
+img.onload=()=>{{draw();sendCoins();}};
 
 function draw(){{
-  ctx.clearRect(0,0,IW,IH); ctx.drawImage(img,0,0);
-  const off=new OffscreenCanvas(IW,IH),oc=off.getContext('2d');
-  oc.fillStyle='rgba(0,0,0,.5)'; oc.fillRect(0,0,IW,IH);
+  ctx.clearRect(0,0,IW,IH);
+  ctx.drawImage(img,0,0);
+
+  const c=corners();
+  const pts=[c.TL,c.TR,c.BR,c.BL];
+
+  /* overlay sombre hors rectangle */
+  const off=new OffscreenCanvas(IW,IH), oc=off.getContext('2d');
+  oc.fillStyle='rgba(0,0,0,.52)'; oc.fillRect(0,0,IW,IH);
   oc.globalCompositeOperation='destination-out';
-  oc.beginPath(); oc.moveTo(coins[0].x,coins[0].y);
-  coins.forEach((c,i)=>{{if(i)oc.lineTo(c.x,c.y)}}); oc.closePath();
+  oc.beginPath(); oc.moveTo(pts[0].x,pts[0].y);
+  pts.forEach((p,i)=>{{if(i)oc.lineTo(p.x,p.y)}}); oc.closePath();
   oc.fillStyle='rgba(0,0,0,1)'; oc.fill();
   ctx.drawImage(off,0,0);
-  ctx.beginPath(); ctx.moveTo(coins[0].x,coins[0].y);
-  coins.forEach((c,i)=>{{if(i)ctx.lineTo(c.x,c.y)}}); ctx.closePath();
-  ctx.strokeStyle='#2979ff'; ctx.lineWidth=Math.max(2,R*.1); ctx.stroke();
-  const lbl=['↖','↗','↘','↙'];
-  coins.forEach((c,i)=>{{
-    ctx.beginPath(); ctx.arc(c.x,c.y,R+5,0,Math.PI*2);
-    ctx.fillStyle='rgba(0,0,0,.2)'; ctx.fill();
-    ctx.beginPath(); ctx.arc(c.x,c.y,R,0,Math.PI*2);
-    ctx.fillStyle=drag===i?'#82b1ff':'#2979ff'; ctx.fill();
-    ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(2,R*.1); ctx.stroke();
-    const s=R*.35;
-    ctx.strokeStyle='rgba(255,255,255,.8)'; ctx.lineWidth=Math.max(1.5,R*.07);
-    ctx.beginPath(); ctx.moveTo(c.x-s,c.y); ctx.lineTo(c.x+s,c.y); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(c.x,c.y-s); ctx.lineTo(c.x,c.y+s); ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,.8)';
-    ctx.font=`bold ${{Math.max(10,R*.4)}}px Segoe UI`;
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(lbl[i],c.x,c.y);
+
+  /* bordure rectangle */
+  ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+  pts.forEach((p,i)=>{{if(i)ctx.lineTo(p.x,p.y)}}); ctx.closePath();
+  ctx.strokeStyle='#2979ff'; ctx.lineWidth=Math.max(2,HR*.12); ctx.stroke();
+
+  /* ligne rotation */
+  ctx.beginPath(); ctx.moveTo(c.N.x,c.N.y); ctx.lineTo(c.ROT.x,c.ROT.y);
+  ctx.strokeStyle='rgba(41,121,255,.5)'; ctx.lineWidth=Math.max(1.5,HR*.07); ctx.stroke();
+
+  /* poignées coins (bleu) */
+  [['TL',c.TL],['TR',c.TR],['BR',c.BR],['BL',c.BL]].forEach(([k,p])=>{{
+    ctx.beginPath(); ctx.arc(p.x,p.y,HR,0,Math.PI*2);
+    ctx.fillStyle=drag&&drag.mode==='resize-'+k?'#82b1ff':'#2979ff';
+    ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(1.5,HR*.09); ctx.stroke();
+    /* croix */
+    const s=HR*.38;
+    ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=Math.max(1.5,HR*.07);
+    ctx.beginPath(); ctx.moveTo(p.x-s,p.y); ctx.lineTo(p.x+s,p.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(p.x,p.y-s); ctx.lineTo(p.x,p.y+s); ctx.stroke();
   }});
+
+  /* poignées milieux (petites, cyan) */
+  [['N',c.N],['S',c.S],['E',c.E],['W',c.W]].forEach(([k,p])=>{{
+    const sr=HR*.65;
+    ctx.beginPath(); ctx.arc(p.x,p.y,sr,0,Math.PI*2);
+    ctx.fillStyle=drag&&drag.mode==='resize-'+k?'#80deea':'#00b4d8';
+    ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(1,HR*.07); ctx.stroke();
+  }});
+
+  /* poignée rotation (orange) */
+  ctx.beginPath(); ctx.arc(c.ROT.x,c.ROT.y,HR*.72,0,Math.PI*2);
+  ctx.fillStyle=drag&&drag.mode==='rotate'?'#ffcc02':'#ffa726';
+  ctx.fill();
+  ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(1.5,HR*.08); ctx.stroke();
+  ctx.fillStyle='#fff'; ctx.font=`bold ${{Math.round(HR*.7)}}px Segoe UI`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('↻',c.ROT.x,c.ROT.y+1);
 }}
+
+/* ── Input helpers ── */
 function gp(e){{
-  const r=cv.getBoundingClientRect(),sx2=IW/r.width,sy2=IH/r.height;
+  const r=cv.getBoundingClientRect(), scx=IW/r.width, scy=IH/r.height;
   const s=e.touches?e.touches[0]:e;
-  return{{x:Math.max(0,Math.min(IW,(s.clientX-r.left)*sx2)),
-          y:Math.max(0,Math.min(IH,(s.clientY-r.top)*sy2))}};
+  return {{x:(s.clientX-r.left)*scx, y:(s.clientY-r.top)*scy}};
 }}
-function hit(p){{
-  for(let i=0;i<4;i++){{const dx=p.x-coins[i].x,dy=p.y-coins[i].y;
-    if(Math.sqrt(dx*dx+dy*dy)<R*2.4)return i;}} return null;
+function dist(a,b){{return Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2);}}
+
+/* check hit on a world-space point, radius rr */
+function hitPt(p,wp,rr){{return dist(p,wp)<rr;}}
+
+/* check if point is inside rotated rectangle */
+function insideRect(p){{
+  const cos=Math.cos(-R.angle), sin=Math.sin(-R.angle);
+  const dx=p.x-R.cx, dy=p.y-R.cy;
+  const lx=dx*cos-dy*sin, ly=dx*sin+dy*cos;
+  return Math.abs(lx)<=R.hw && Math.abs(ly)<=R.hh;
 }}
+
+function detectHit(p){{
+  const c=corners();
+  const hr2=HR*1.6, sr2=HR*.65*1.8;
+  /* rotation first (smallest, on top) */
+  if(hitPt(p,c.ROT,HR*1.3)) return 'rotate';
+  /* corner handles */
+  if(hitPt(p,c.TL,hr2)) return 'resize-TL';
+  if(hitPt(p,c.TR,hr2)) return 'resize-TR';
+  if(hitPt(p,c.BR,hr2)) return 'resize-BR';
+  if(hitPt(p,c.BL,hr2)) return 'resize-BL';
+  /* mid handles */
+  if(hitPt(p,c.N,sr2))  return 'resize-N';
+  if(hitPt(p,c.S,sr2))  return 'resize-S';
+  if(hitPt(p,c.E,sr2))  return 'resize-E';
+  if(hitPt(p,c.W,sr2))  return 'resize-W';
+  /* inside = move */
+  if(insideRect(p))      return 'move';
+  return null;
+}}
+
+/* ── Drag logic ── */
+function onDown(e){{
+  e.preventDefault();
+  const p=gp(e);
+  const mode=detectHit(p);
+  if(!mode)return;
+  drag={{mode, p0:p, R0:{{...R}}}};
+  draw();
+}}
+
+function localCoord(wx,wy){{
+  /* world → local (unrotated) */
+  const cos=Math.cos(-R.angle), sin=Math.sin(-R.angle);
+  const dx=wx-R.cx, dy=wy-R.cy;
+  return {{lx:dx*cos-dy*sin, ly:dx*sin+dy*cos}};
+}}
+
+function onMove(e){{
+  if(!drag)return; e.preventDefault();
+  const p=gp(e);
+  const dx=p.x-drag.p0.x, dy=p.y-drag.p0.y;
+  const R0=drag.R0;
+
+  if(drag.mode==='move'){{
+    R.cx=Math.max(0,Math.min(IW, R0.cx+dx));
+    R.cy=Math.max(0,Math.min(IH, R0.cy+dy));
+
+  }} else if(drag.mode==='rotate'){{
+    const angle=Math.atan2(p.y-R.cy, p.x-R.cx)+Math.PI/2;
+    R.angle=angle;
+
+  }} else {{
+    /* resize : trouver coin opposé fixe, puis recalcul centre+demi-dims */
+    const cos=Math.cos(R0.angle), sin=Math.sin(R0.angle);
+    const rot =(lx,ly)=>{{return {{x:R0.cx+lx*cos-ly*sin, y:R0.cy+lx*sin+ly*cos}}}};
+    const unrot=(wx,wy)=>{{
+      const ddx=wx-R0.cx, ddy=wy-R0.cy;
+      return {{lx:ddx*cos+ddy*sin, ly:-ddx*sin+ddy*cos}};
+    }};
+
+    /* ancre = coin/milieu opposé ; mobile = coin/milieu qu'on tire */
+    let anchor, moveFn;
+    if(drag.mode==='resize-TL'){{
+      anchor=rot( R0.hw, R0.hh);
+      moveFn=(px,py)=>{{
+        const {{lx,ly}}=unrot(px,py);
+        R.hw=Math.max(20,Math.abs(R0.hw-lx)/1)*1; // asymmetric safe
+        /* recompute from anchor */
+        const nlx=-R.hw, nly=-R.hh;
+        // actually use direct approach below
+      }};
+    }}
+
+    /* simpler unified approach: find opposite anchor corner/edge in world */
+    let ax=R0.cx, ay=R0.cy; /* anchor world coords */
+    let moveX=true, moveY=true;
+    if(drag.mode==='resize-TL'){{ ax=rot( R0.hw, R0.hh).x; ay=rot( R0.hw, R0.hh).y; }}
+    if(drag.mode==='resize-TR'){{ ax=rot(-R0.hw, R0.hh).x; ay=rot(-R0.hw, R0.hh).y; }}
+    if(drag.mode==='resize-BR'){{ ax=rot(-R0.hw,-R0.hh).x; ay=rot(-R0.hw,-R0.hh).y; }}
+    if(drag.mode==='resize-BL'){{ ax=rot( R0.hw,-R0.hh).x; ay=rot( R0.hw,-R0.hh).y; }}
+    if(drag.mode==='resize-N') {{ ax=rot(0, R0.hh).x;      ay=rot(0, R0.hh).y;  moveX=false; }}
+    if(drag.mode==='resize-S') {{ ax=rot(0,-R0.hh).x;      ay=rot(0,-R0.hh).y;  moveX=false; }}
+    if(drag.mode==='resize-E') {{ ax=rot(-R0.hw,0).x;      ay=rot(-R0.hw,0).y;  moveY=false; }}
+    if(drag.mode==='resize-W') {{ ax=rot( R0.hw,0).x;      ay=rot( R0.hw,0).y;  moveY=false; }}
+
+    /* current drag point in local frame relative to anchor */
+    const ddx=p.x-ax, ddy=p.y-ay;
+    const llx= ddx*cos+ddy*sin;  /* local x of (drag-anchor) */
+    const lly=-ddx*sin+ddy*cos;  /* local y */
+
+    if(moveX&&moveY){{
+      R.hw=Math.max(20, Math.abs(llx)/2);
+      R.hh=Math.max(20, Math.abs(lly)/2);
+      R.cx=ax+(llx/2)*cos-(lly/2)*sin;
+      R.cy=ay+(llx/2)*sin+(lly/2)*cos;
+    }} else if(!moveX){{
+      R.hh=Math.max(20, Math.abs(lly)/2);
+      R.cx=ax-(0)*cos-( lly/2)*sin;
+      R.cy=ay-(0)*sin+( lly/2)*cos;
+    }} else {{
+      R.hw=Math.max(20, Math.abs(llx)/2);
+      R.cx=ax+(llx/2)*cos-(0)*sin;
+      R.cy=ay+(llx/2)*sin+(0)*cos;
+    }}
+  }}
+  draw();
+}}
+
+function onUp(e){{
+  if(!drag)return;
+  drag=null;
+  sendCoins();
+  draw();
+}}
+
+/* ── sendCoins : envoie les 4 coins [TL,TR,BR,BL] en coords canvas ── */
 function sendCoins(){{
-  const disp=coins.map(c=>[Math.round(c.x),Math.round(c.y)]);
+  const c=corners();
+  const disp=[[c.TL.x,c.TL.y],[c.TR.x,c.TR.y],[c.BR.x,c.BR.y],[c.BL.x,c.BL.y]]
+    .map(p=>[Math.round(p[0]),Math.round(p[1])]);
   const val=JSON.stringify(disp);
-  /* ── Méthode 1 : cibler via aria-label ── */
   try{{
     const doc=window.parent.document;
     const nativeSetter=Object.getOwnPropertyDescriptor(
@@ -701,30 +887,27 @@ function sendCoins(){{
     let sent=false;
     for(const el of doc.querySelectorAll('input[type="text"]')){{
       if(el.getAttribute('aria-label')==='_coins_'){{
-        nativeSetter.call(el,val);
-        el.dispatchEvent(new Event('input',{{bubbles:true}}));
+        nativeSetter.call(el,val); el.dispatchEvent(new Event('input',{{bubbles:true}}));
         sent=true; break;
       }}
     }}
-    /* ── Méthode 2 : fallback — envoyer à tous les text inputs cachés ── */
     if(!sent){{
       for(const el of doc.querySelectorAll('input[type="text"]')){{
-        const style=window.parent.getComputedStyle(
-          el.closest('[data-testid="stTextInput"]')||el);
-        if(style.display==='none'||style.visibility==='hidden'){{
-          nativeSetter.call(el,val);
-          el.dispatchEvent(new Event('input',{{bubbles:true}}));
+        const st2=window.parent.getComputedStyle(el.closest('[data-testid="stTextInput"]')||el);
+        if(st2.display==='none'||st2.visibility==='hidden'){{
+          nativeSetter.call(el,val); el.dispatchEvent(new Event('input',{{bubbles:true}}));
         }}
       }}
     }}
   }}catch(e){{}}
 }}
-cv.addEventListener('mousedown',e=>{{e.preventDefault();drag=hit(gp(e));draw();}});
-cv.addEventListener('touchstart',e=>{{e.preventDefault();drag=hit(gp(e));draw();}},{{passive:false}});
-cv.addEventListener('mousemove',e=>{{if(drag===null)return;coins[drag]=gp(e);draw();}});
-cv.addEventListener('touchmove',e=>{{e.preventDefault();if(drag===null)return;coins[drag]=gp(e);draw();}},{{passive:false}});
-cv.addEventListener('mouseup',()=>{{drag=null;sendCoins();draw();}});
-cv.addEventListener('touchend',()=>{{drag=null;sendCoins();draw();}});
+
+cv.addEventListener('mousedown', onDown);
+cv.addEventListener('touchstart', onDown, {{passive:false}});
+cv.addEventListener('mousemove', onMove);
+cv.addEventListener('touchmove', onMove, {{passive:false}});
+cv.addEventListener('mouseup', onUp);
+cv.addEventListener('touchend', onUp);
 </script></body></html>"""
 
     # Hauteur = proportionnelle à la VRAIE largeur d'affichage (480px max = block-container)
