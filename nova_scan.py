@@ -445,18 +445,11 @@ def detecter_contour_auto(img_pil):
             for tol in [0.02, 0.03, 0.05]:
                 approx = cv2.approxPolyDP(c, tol*peri, True)
                 if len(approx)==4 and cv2.contourArea(c)>(small.shape[0]*small.shape[1]*0.15):
-                    # Coords en espace original
-                    pts_orig = (approx.reshape(4,2).astype(np.float32)) / sc
-                    # Etendre de 6% horizontal et 10% vertical pour inclure titre/pied
-                    cx_o = pts_orig[:,0].mean()
-                    cy_o = pts_orig[:,1].mean()
-                    for i in range(4):
-                        pts_orig[i,0] = np.clip(cx_o + (pts_orig[i,0]-cx_o)*1.06, 0, w)
-                        pts_orig[i,1] = np.clip(cy_o + (pts_orig[i,1]-cy_o)*1.10, 0, h)
-                    s=pts_orig.sum(axis=1); diff=np.diff(pts_orig,axis=1).flatten()
+                    pts = (approx.reshape(4,2)/sc).astype(np.float32)
+                    s=pts.sum(axis=1); diff=np.diff(pts,axis=1)
                     o=np.zeros((4,2),dtype=np.float32)
-                    o[0]=pts_orig[np.argmin(s)]; o[1]=pts_orig[np.argmin(diff)]
-                    o[2]=pts_orig[np.argmax(s)]; o[3]=pts_orig[np.argmax(diff)]
+                    o[0]=pts[np.argmin(s)]; o[1]=pts[np.argmin(diff)]
+                    o[2]=pts[np.argmax(s)]; o[3]=pts[np.argmax(diff)]
                     return o.tolist()
         # Fallback : bounding rect du plus grand contour
         if cnts:
@@ -466,7 +459,7 @@ def detecter_contour_auto(img_pil):
                 x,y,bw,bh = cv2.boundingRect(c)
                 # Convertir en coords originales
                 x,y,bw,bh = x/sc, y/sc, bw/sc, bh/sc
-                pad = min(w,h)*0.04  # padding 4% pour inclure titre/pied de page
+                pad = min(w,h)*0.01  # petit padding
                 x1,y1 = max(0,x-pad), max(0,y-pad)
                 x2,y2 = min(w,x+bw+pad), min(h,y+bh+pad)
                 return [[x1,y1],[x2,y1],[x2,y2],[x1,y2]]
@@ -496,10 +489,6 @@ def recadrer_depuis_coins(img_pil, coins, mode="couleur"):
     mW=int(max(wA,wB)); mH=int(max(hA,hB))
     if mW < 10 or mH < 10:
         return img_pil
-    # Sanity check : si l'image originale est portrait mais mW > mH, inverser
-    orig_w, orig_h = img_pil.size
-    if orig_h > orig_w and mW > mH:
-        mW, mH = mH, mW
     dst=np.array([[0,0],[mW-1,0],[mW-1,mH-1],[0,mH-1]],dtype=np.float32)
     M=cv2.getPerspectiveTransform(pts,dst)
     warped=cv2.warpPerspective(img_np,M,(mW,mH))
@@ -614,15 +603,16 @@ def afficher_canvas(img_pil, coins_initiales, prefix, sk_local):
     if coins_initiales:
         cd = [[c[0] / sx, c[1] / sy] for c in coins_initiales]
     else:
-        mx, my = wd * .02, hd * .02
+        mx, my = wd * .08, hd * .08
         cd = [[mx, my], [wd - mx, my], [wd - mx, hd - my], [mx, hd - my]]
 
     st.session_state[f"canvas_sx_{prefix}_{sk_local}"] = sx
     st.session_state[f"canvas_sy_{prefix}_{sk_local}"] = sy
 
     coins_json_key = f"canvas_coins_json_{prefix}_{sk_local}"
-    # Toujours réinitialiser avec les coords actuelles (image peut avoir changé)
-    st.session_state[coins_json_key] = json.dumps(cd)
+    # Toujours initialiser avec les coins courants (évite les coords obsolètes)
+    if coins_json_key not in st.session_state:
+        st.session_state[coins_json_key] = json.dumps(cd)
 
     relay_key = f"relay_coins_{prefix}_{sk_local}"
     relay_val = st.text_input("_coins_", key=relay_key, label_visibility="collapsed",
@@ -659,7 +649,7 @@ const img=new Image(); img.src='data:image/jpeg;base64,{b64}';
 let coins=INIT.map(c=>({{x:c[0],y:c[1]}}));
 let drag=null;
 const R=Math.max(18,Math.min(IW,IH)*.045);
-img.onload=()=>{{draw();sendCoins();}};
+img.onload=()=>{{draw();sendCoins();}}
 
 function draw(){{
   ctx.clearRect(0,0,IW,IH); ctx.drawImage(img,0,0);
@@ -801,22 +791,16 @@ def flux_image(img_pil, nom_pdf, prefix):
         st.session_state[nom_key] = nom_pdf
 
     if state_key not in st.session_state:
-        st.session_state[state_key] = "detecting"
+        st.session_state[state_key] = "canvas"
+        # Coins initiaux = pleine image avec 2% de marge
+        st.session_state[corners_key] = None  # pas de coins auto par défaut
 
     img_pil = b64_to_img(st.session_state[img_b64_key])
     nom_pdf = st.session_state[nom_key]
     state   = st.session_state[state_key]
 
-    # ── DÉTECTION ──
-    if state == "detecting":
-        with st.spinner("🔍 Détection du document..."):
-            coins = detecter_contour_auto(img_pil)
-        st.session_state[corners_key] = coins
-        st.session_state[state_key]   = "canvas"
-        st.rerun()
-
     # ── CANVAS ──
-    elif state == "canvas":
+    if state == "canvas":
         st.markdown('<div class="steps-row">'
                     '<div class="step-badge">① ✓ Photo prise</div>'
                     '<div class="step-badge step-active">② Ajuster le recadrage</div>'
@@ -824,6 +808,22 @@ def flux_image(img_pil, nom_pdf, prefix):
                     '</div>', unsafe_allow_html=True)
 
         coins = st.session_state.get(corners_key)
+
+        # ── Bouton détection automatique ──
+        if st.button("🔍 Détecter automatiquement", key=f"auto_{prefix}_{sk_local}", use_container_width=True):
+            with st.spinner("🔍 Détection du document en cours..."):
+                coins_auto = detecter_contour_auto(img_pil)
+            if coins_auto:
+                st.session_state[corners_key] = coins_auto
+                # Forcer réinitialisation des coins du canvas
+                ck = f"canvas_coins_json_{prefix}_{sk_local}"
+                if ck in st.session_state:
+                    del st.session_state[ck]
+                st.success("✅ Document détecté ! Ajustez les coins si nécessaire.")
+            else:
+                st.warning("⚠️ Détection échouée — placez les coins manuellement.")
+            st.rerun()
+
         if coins:
             st.markdown("""<div style="background:rgba(0,230,118,.07);border:1px solid #00e67644;
                 border-radius:10px;padding:.55rem 1rem;font-size:.78rem;color:#00e676;
@@ -831,7 +831,7 @@ def flux_image(img_pil, nom_pdf, prefix):
                 ✂️ Document détecté — glissez les coins bleus pour ajuster</div>""",
                 unsafe_allow_html=True)
         else:
-            st.markdown('<div class="tip-box">💡 Document non détecté — placez les 4 coins manuellement.</div>',
+            st.markdown('<div class="tip-box">💡 Cliquez sur "Détecter automatiquement" ou placez les 4 coins manuellement.</div>',
                         unsafe_allow_html=True)
 
         st.markdown("<div style='font-size:.78rem;color:#7a90b8;margin-bottom:.4rem;'>Mode de rendu :</div>",
