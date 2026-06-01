@@ -614,9 +614,8 @@ def afficher_canvas(img_pil, coins_initiales, prefix, sk_local):
     st.session_state[f"canvas_sy_{prefix}_{sk_local}"] = sy
 
     coins_json_key = f"canvas_coins_json_{prefix}_{sk_local}"
-    # Initialisation uniquement si la clé n'existe pas encore
-    if coins_json_key not in st.session_state:
-        st.session_state[coins_json_key] = json.dumps(cd)
+    # Toujours réinitialiser avec les coords actuelles (image peut avoir changé)
+    st.session_state[coins_json_key] = json.dumps(cd)
 
     relay_key = f"relay_coins_{prefix}_{sk_local}"
     relay_val = st.text_input("_coins_", key=relay_key, label_visibility="collapsed",
@@ -653,7 +652,7 @@ const img=new Image(); img.src='data:image/jpeg;base64,{b64}';
 let coins=INIT.map(c=>({{x:c[0],y:c[1]}}));
 let drag=null;
 const R=Math.max(18,Math.min(IW,IH)*.045);
-img.onload=()=>draw();
+img.onload=()=>{{draw();sendCoins();}};
 
 function draw(){{
   ctx.clearRect(0,0,IW,IH); ctx.drawImage(img,0,0);
