@@ -489,6 +489,10 @@ def recadrer_depuis_coins(img_pil, coins, mode="couleur"):
     mW=int(max(wA,wB)); mH=int(max(hA,hB))
     if mW < 10 or mH < 10:
         return img_pil
+    # Sanity check : si l'image originale est portrait mais mW > mH, inverser
+    orig_w, orig_h = img_pil.size
+    if orig_h > orig_w and mW > mH:
+        mW, mH = mH, mW
     dst=np.array([[0,0],[mW-1,0],[mW-1,mH-1],[0,mH-1]],dtype=np.float32)
     M=cv2.getPerspectiveTransform(pts,dst)
     warped=cv2.warpPerspective(img_np,M,(mW,mH))
@@ -603,7 +607,7 @@ def afficher_canvas(img_pil, coins_initiales, prefix, sk_local):
     if coins_initiales:
         cd = [[c[0] / sx, c[1] / sy] for c in coins_initiales]
     else:
-        mx, my = wd * .08, hd * .08
+        mx, my = wd * .02, hd * .02
         cd = [[mx, my], [wd - mx, my], [wd - mx, hd - my], [mx, hd - my]]
 
     st.session_state[f"canvas_sx_{prefix}_{sk_local}"] = sx
