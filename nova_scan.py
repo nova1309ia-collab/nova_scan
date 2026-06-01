@@ -581,10 +581,17 @@ body{background:transparent;font-family:'DM Sans',sans-serif;padding:0}
 </body></html>""", height=420, scrolling=False)
 
 
-# ── Canvas interactif (affichage uniquement — boutons Streamlit natifs) ──────
+# ── Canvas interactif — bouton "Recadrer" intégré dans le HTML ───────────────
 def afficher_canvas(img_pil, coins_initiales, prefix, sk_local):
-    """Affiche le canvas dans un components.html. Stocke les coins via une
-    hidden text_input mise à jour par postMessage → st.session_state."""
+    """
+    Affiche le canvas + bouton Recadrer DANS le HTML.
+    Communication JS→Python via st.query_params :
+      - l'utilisateur déplace les coins
+      - clique "Recadrer" dans le canvas
+      - le JS écrit  ?coins_mob=[[…]]&crop_mob=1  dans window.parent.location
+      - Streamlit lit ces params au rerun suivant
+    Aucun st.text_input relay — on évite le cross-origin DOM.
+    """
     import streamlit.components.v1 as components
 
     max_dim = 900
@@ -601,7 +608,7 @@ def afficher_canvas(img_pil, coins_initiales, prefix, sk_local):
     b64 = base64.b64encode(buf.getvalue()).decode()
 
     if coins_initiales:
-        cd = [[c[0] / sx, c[1] / sy] for c in coins_initiales]
+        cd = [[round(c[0] / sx, 2), round(c[1] / sy, 2)] for c in coins_initiales]
     else:
         mx, my = wd * .08, hd * .08
         cd = [[mx, my], [wd - mx, my], [wd - mx, hd - my], [mx, hd - my]]
@@ -609,47 +616,43 @@ def afficher_canvas(img_pil, coins_initiales, prefix, sk_local):
     st.session_state[f"canvas_sx_{prefix}_{sk_local}"] = sx
     st.session_state[f"canvas_sy_{prefix}_{sk_local}"] = sy
 
-    coins_json_key = f"canvas_coins_json_{prefix}_{sk_local}"
-    relay_key      = f"relay_coins_{prefix}_{sk_local}"
-
-    # Initialiser le relay UNE SEULE FOIS avec les coins courants.
-    # NE PAS écraser ensuite : c'est le JS (sendCoins) qui écrit dedans via nativeSetter.
-    # Passer value= à st.text_input réinitialiserait la valeur à chaque rerun et casserait la comm JS→Python.
-    if relay_key not in st.session_state:
-        st.session_state[relay_key] = json.dumps(cd)
-
-    # Si les coins ont changé côté Python (ex: détection auto), forcer la mise à jour
-    # SEULEMENT quand coins_initiales vient de changer (on le détecte via prev_init_key)
-    prev_init_key = f"canvas_prev_init_{prefix}_{sk_local}"
-    current_init  = json.dumps(cd)
-    if st.session_state.get(prev_init_key) != current_init:
-        st.session_state[prev_init_key] = current_init
-        st.session_state[relay_key]     = current_init
-
-    # Le text_input sans value= : Streamlit lit session_state[relay_key] comme valeur initiale
-    # mais ne l'écrase PAS au rerun → le JS peut écrire dedans librement
-    relay_val = st.text_input("_coins_", key=relay_key, label_visibility="collapsed")
-
-    # Synchroniser coins_json_key depuis le relay si valide
-    if relay_val:
-        try:
-            parsed_relay = json.loads(relay_val)
-            if (isinstance(parsed_relay, list) and len(parsed_relay) == 4
-                    and all(isinstance(p, list) and len(p) == 2 for p in parsed_relay)):
-                st.session_state[coins_json_key] = relay_val
-        except Exception:
-            pass
+    # Clé qui identifie ce déclenchement de recadrage dans les query_params
+    qp_coins_key = f"coins_{prefix}"
+    qp_crop_key  = f"crop_{prefix}"
 
     html = f"""<!DOCTYPE html><html><head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{background:#050d1a;padding:2px;font-family:'Segoe UI',sans-serif}}
+body{{background:#050d1a;padding:4px 2px 6px;font-family:'DM Sans',sans-serif}}
 canvas{{display:block;width:100%;border-radius:10px;touch-action:none;cursor:crosshair}}
-.hint{{text-align:center;font-size:.73rem;color:#3a5070;margin-top:6px}}
+.hint{{text-align:center;font-size:.72rem;color:#3a5070;margin:5px 0 8px}}
+.btn-crop{{
+  display:block;width:100%;padding:.85rem 1rem;
+  background:linear-gradient(135deg,#2979ff,#1565c0);
+  color:#fff;border:none;border-radius:14px;
+  font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;
+  letter-spacing:.8px;cursor:pointer;
+  box-shadow:0 4px 18px rgba(41,121,255,.5);
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .1s,opacity .15s;
+}}
+.btn-crop:active{{transform:scale(.97);opacity:.85}}
+.btn-skip{{
+  display:block;width:100%;padding:.65rem 1rem;margin-top:.5rem;
+  background:rgba(255,255,255,.03);border:1px solid rgba(41,121,255,.3);
+  color:#8ba4cc;border-radius:12px;
+  font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:all .15s;
+}}
+.btn-skip:active{{opacity:.7}}
 </style></head><body>
 <canvas id="cv"></canvas>
 <div class="hint">Glissez les 4 coins 🔵 sur les bords du document</div>
+<button class="btn-crop" id="btnCrop" onclick="doCrop()">✅ Recadrer &amp; Générer PDF</button>
+<button class="btn-skip" onclick="doSkip()">⏭ Sans recadrage</button>
 <script>
 const IW={wd},IH={hd},SX={sx},SY={sy};
 const INIT={json.dumps(cd)};
@@ -660,7 +663,7 @@ const img=new Image(); img.src='data:image/jpeg;base64,{b64}';
 let coins=INIT.map(c=>({{x:c[0],y:c[1]}}));
 let drag=null;
 const R=Math.max(18,Math.min(IW,IH)*.045);
-img.onload=()=>{{draw();sendCoins();}}
+img.onload=()=>draw();
 
 function draw(){{
   ctx.clearRect(0,0,IW,IH); ctx.drawImage(img,0,0);
@@ -701,49 +704,45 @@ function hit(p){{
   for(let i=0;i<4;i++){{const dx=p.x-coins[i].x,dy=p.y-coins[i].y;
     if(Math.sqrt(dx*dx+dy*dy)<R*2.4)return i;}} return null;
 }}
-function sendCoins(){{
-  const disp=coins.map(c=>[Math.round(c.x),Math.round(c.y)]);
-  const val=JSON.stringify(disp);
-  /* ── Méthode 1 : cibler via aria-label ── */
+function setQP(params){{
+  /* Modifie les query params de la page parente pour déclencher un rerun Streamlit */
   try{{
-    const doc=window.parent.document;
-    const nativeSetter=Object.getOwnPropertyDescriptor(
-      window.parent.HTMLInputElement.prototype,'value').set;
-    let sent=false;
-    for(const el of doc.querySelectorAll('input[type="text"]')){{
-      if(el.getAttribute('aria-label')==='_coins_'){{
-        nativeSetter.call(el,val);
-        el.dispatchEvent(new Event('input',{{bubbles:true}}));
-        sent=true; break;
-      }}
-    }}
-    /* ── Méthode 2 : fallback — envoyer à tous les text inputs cachés ── */
-    if(!sent){{
-      for(const el of doc.querySelectorAll('input[type="text"]')){{
-        const style=window.parent.getComputedStyle(
-          el.closest('[data-testid="stTextInput"]')||el);
-        if(style.display==='none'||style.visibility==='hidden'){{
-          nativeSetter.call(el,val);
-          el.dispatchEvent(new Event('input',{{bubbles:true}}));
-        }}
-      }}
-    }}
-  }}catch(e){{}}
+    const url=new URL(window.parent.location.href);
+    for(const[k,v] of Object.entries(params)) url.searchParams.set(k,v);
+    window.parent.history.pushState({{}},'',url.toString());
+    /* Déclenche le rerun Streamlit en simulant une navigation */
+    window.parent.dispatchEvent(new PopStateEvent('popstate',{{state:{{}}}}));
+  }}catch(e){{
+    /* Fallback si cross-origin : forcer navigation complète */
+    try{{
+      const url=new URL(window.parent.location.href);
+      for(const[k,v] of Object.entries(params)) url.searchParams.set(k,v);
+      window.parent.location.href=url.toString();
+    }}catch(e2){{}}
+  }}
+}}
+function doCrop(){{
+  const disp=coins.map(c=>[Math.round(c.x),Math.round(c.y)]);
+  document.getElementById('btnCrop').textContent='⏳ Génération...';
+  document.getElementById('btnCrop').disabled=true;
+  setQP({{'{qp_coins_key}':JSON.stringify(disp),'{qp_crop_key}':'1'}});
+}}
+function doSkip(){{
+  setQP({{'{qp_crop_key}':'skip'}});
 }}
 cv.addEventListener('mousedown',e=>{{e.preventDefault();drag=hit(gp(e));draw();}});
 cv.addEventListener('touchstart',e=>{{e.preventDefault();drag=hit(gp(e));draw();}},{{passive:false}});
 cv.addEventListener('mousemove',e=>{{if(drag===null)return;coins[drag]=gp(e);draw();}});
 cv.addEventListener('touchmove',e=>{{e.preventDefault();if(drag===null)return;coins[drag]=gp(e);draw();}},{{passive:false}});
-cv.addEventListener('mouseup',()=>{{drag=null;sendCoins();draw();}});
-cv.addEventListener('touchend',()=>{{drag=null;sendCoins();draw();}});
+cv.addEventListener('mouseup',()=>{{drag=null;draw();}});
+cv.addEventListener('touchend',()=>{{drag=null;draw();}});
 </script></body></html>"""
 
-    # Hauteur = proportionnelle à la VRAIE largeur d'affichage (480px max = block-container)
-    # et non à 320px, sinon les coordonnées des coins sont décalées visuellement.
-    display_w = 460  # largeur utile estimée du block-container mobile (480px - padding)
+    display_w = 460
     display_h = int(hd * display_w / wd)
-    components.html(html, height=display_h + 50, scrolling=False)
-    return coins_json_key
+    # +120 pour les deux boutons en dessous du canvas
+    components.html(html, height=display_h + 120, scrolling=False)
+    return qp_coins_key
 
 
 # ── Affichage résultat ────────────────────────────────────────────────────────
@@ -795,7 +794,10 @@ def flux_image(img_pil, nom_pdf, prefix):
     img_b64_key = f"img_b64_{prefix}"
     nom_key     = f"nom_pdf_{prefix}"
     mode_key    = f"mode_{prefix}"
-    relay_key   = f"_relay_{prefix}_{sk_local}"
+
+    # Clés query_params attendues (correspondant à celles générées dans afficher_canvas)
+    qp_coins_key = f"coins_{prefix}"
+    qp_crop_key  = f"crop_{prefix}"
 
     if img_b64_key not in st.session_state:
         st.session_state[img_b64_key] = img_to_b64(img_pil)
@@ -803,12 +805,62 @@ def flux_image(img_pil, nom_pdf, prefix):
 
     if state_key not in st.session_state:
         st.session_state[state_key] = "canvas"
-        # Coins initiaux = pleine image avec 2% de marge
-        st.session_state[corners_key] = None  # pas de coins auto par défaut
+        st.session_state[corners_key] = None
 
     img_pil = b64_to_img(st.session_state[img_b64_key])
     nom_pdf = st.session_state[nom_key]
     state   = st.session_state[state_key]
+
+    # ── Lecture des query_params générés par le bouton dans le canvas HTML ──
+    qp = st.query_params
+    crop_action = qp.get(qp_crop_key, "")
+
+    if crop_action == "1" and state == "canvas":
+        # L'utilisateur a cliqué "Recadrer" dans le canvas
+        raw_coins = qp.get(qp_coins_key, "")
+        sx_val = st.session_state.get(f"canvas_sx_{prefix}_{sk_local}", 1.0)
+        sy_val = st.session_state.get(f"canvas_sy_{prefix}_{sk_local}", 1.0)
+        mode_map = {"🎨 Couleur": "couleur", "🌫️ Niveaux de gris": "gris", "📄 Noir & Blanc": "nb"}
+        mode_radio = st.session_state.get(f"mode_radio_{prefix}_{sk_local}", "🎨 Couleur")
+        st.session_state[mode_key] = mode_map.get(mode_radio, "couleur")
+
+        corners_ok = False
+        try:
+            parsed = json.loads(raw_coins) if raw_coins else None
+            if parsed and isinstance(parsed[0], list) and len(parsed) == 4:
+                w_orig, h_orig = img_pil.size
+                corners_orig = [[round(p[0] * sx_val), round(p[1] * sy_val)] for p in parsed]
+                valid = all(0 <= c[0] <= w_orig and 0 <= c[1] <= h_orig for c in corners_orig)
+                if valid:
+                    st.session_state[corners_key] = corners_orig
+                    st.session_state[badge_key]   = "manual"
+                    corners_ok = True
+        except Exception:
+            pass
+
+        if not corners_ok:
+            # Fallback : coins auto si dispo, sinon aucun recadrage
+            coins_auto = st.session_state.get(corners_key)
+            st.session_state[badge_key] = "auto" if coins_auto else "none"
+
+        st.session_state[state_key] = "result"
+        # Nettoyer les query_params pour éviter une ré-entrée au prochain rerun
+        try:
+            if qp_crop_key  in st.query_params: del st.query_params[qp_crop_key]
+            if qp_coins_key in st.query_params: del st.query_params[qp_coins_key]
+        except Exception:
+            pass
+        st.rerun()
+
+    elif crop_action == "skip" and state == "canvas":
+        # L'utilisateur a cliqué "Sans recadrage"
+        st.session_state[badge_key]  = "none"
+        st.session_state[state_key]  = "result"
+        try:
+            if qp_crop_key in st.query_params: del st.query_params[qp_crop_key]
+        except Exception:
+            pass
+        st.rerun()
 
     # ── CANVAS ──
     if state == "canvas":
@@ -826,7 +878,6 @@ def flux_image(img_pil, nom_pdf, prefix):
                 coins_auto = detecter_contour_auto(img_pil)
             if coins_auto:
                 st.session_state[corners_key] = coins_auto
-                # Forcer réinitialisation des coins du canvas
                 ck = f"canvas_coins_json_{prefix}_{sk_local}"
                 if ck in st.session_state:
                     del st.session_state[ck]
@@ -853,44 +904,8 @@ def flux_image(img_pil, nom_pdf, prefix):
         mode_map = {"🎨 Couleur": "couleur", "🌫️ Niveaux de gris": "gris", "📄 Noir & Blanc": "nb"}
         st.session_state[mode_key] = mode_map[mode]
 
-        coins_json_key = afficher_canvas(img_pil, coins, prefix, sk_local)
-
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("⏭ Sans recadrage", key=f"skip_{prefix}_{sk_local}", use_container_width=True):
-                st.session_state[badge_key]  = "none"
-                st.session_state[state_key]  = "result"
-                st.rerun()
-        with col2:
-            if st.button("✅ Recadrer & Générer PDF", key=f"confirm_{prefix}_{sk_local}", use_container_width=True):
-                # coins_json_key est synchronisé depuis le relay JS à chaque déplacement
-                raw = st.session_state.get(coins_json_key, "")
-                sx_val = st.session_state.get(f"canvas_sx_{prefix}_{sk_local}", 1.0)
-                sy_val = st.session_state.get(f"canvas_sy_{prefix}_{sk_local}", 1.0)
-                corners_ok = False
-                try:
-                    parsed = json.loads(raw) if raw else None
-                    if parsed and isinstance(parsed[0], list) and len(parsed) == 4:
-                        # Les coords du canvas sont en pixels d'affichage → repasser en pixels originaux
-                        corners_orig = [[round(p[0] * sx_val), round(p[1] * sy_val)] for p in parsed]
-                        # Sanity check : les coins doivent être dans les dimensions de l'image
-                        w_orig, h_orig = img_pil.size
-                        valid = all(
-                            0 <= c[0] <= w_orig and 0 <= c[1] <= h_orig
-                            for c in corners_orig
-                        )
-                        if valid:
-                            st.session_state[corners_key] = corners_orig
-                            st.session_state[badge_key] = "manual"
-                            corners_ok = True
-                except Exception:
-                    pass
-                if not corners_ok:
-                    # Fallback : utiliser les coins auto-détectés (déjà en coords originaux)
-                    st.session_state[corners_key] = coins
-                    st.session_state[badge_key] = "auto" if coins else "none"
-                st.session_state[state_key] = "result"
-                st.rerun()
+        # Le canvas contient maintenant ses propres boutons "Recadrer" et "Sans recadrage"
+        afficher_canvas(img_pil, coins, prefix, sk_local)
 
     # ── RÉSULTAT ──
     elif state == "result":
