@@ -435,20 +435,34 @@ def detecter_contour_auto(img_pil):
         small = cv2.resize(img_np,(int(w*sc),int(h*sc)))
         gray = cv2.cvtColor(small,cv2.COLOR_RGB2GRAY)
         blur = cv2.GaussianBlur(gray,(5,5),0)
-        edges = cv2.Canny(blur,50,150)
+        edges = cv2.Canny(blur,30,120)
         edges = cv2.dilate(edges,np.ones((3,3),np.uint8),iterations=2)
         cnts,_ = cv2.findContours(edges,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
         cnts = sorted(cnts,key=cv2.contourArea,reverse=True)[:10]
         for c in cnts:
             peri = cv2.arcLength(c,True)
-            approx = cv2.approxPolyDP(c,0.02*peri,True)
-            if len(approx)==4 and cv2.contourArea(c)>(small.shape[0]*small.shape[1]*0.2):
-                pts = (approx.reshape(4,2)/sc).astype(np.float32)
-                s=pts.sum(axis=1); diff=np.diff(pts,axis=1)
-                o=np.zeros((4,2),dtype=np.float32)
-                o[0]=pts[np.argmin(s)]; o[1]=pts[np.argmin(diff)]
-                o[2]=pts[np.argmax(s)]; o[3]=pts[np.argmax(diff)]
-                return o.tolist()
+            # Essai avec tolérance croissante : 2%, 3%, 5%
+            for tol in [0.02, 0.03, 0.05]:
+                approx = cv2.approxPolyDP(c, tol*peri, True)
+                if len(approx)==4 and cv2.contourArea(c)>(small.shape[0]*small.shape[1]*0.15):
+                    pts = (approx.reshape(4,2)/sc).astype(np.float32)
+                    s=pts.sum(axis=1); diff=np.diff(pts,axis=1)
+                    o=np.zeros((4,2),dtype=np.float32)
+                    o[0]=pts[np.argmin(s)]; o[1]=pts[np.argmin(diff)]
+                    o[2]=pts[np.argmax(s)]; o[3]=pts[np.argmax(diff)]
+                    return o.tolist()
+        # Fallback : bounding rect du plus grand contour
+        if cnts:
+            c = cnts[0]
+            area = cv2.contourArea(c)
+            if area > (small.shape[0]*small.shape[1]*0.1):
+                x,y,bw,bh = cv2.boundingRect(c)
+                # Convertir en coords originales
+                x,y,bw,bh = x/sc, y/sc, bw/sc, bh/sc
+                pad = min(w,h)*0.01  # petit padding
+                x1,y1 = max(0,x-pad), max(0,y-pad)
+                x2,y2 = min(w,x+bw+pad), min(h,y+bh+pad)
+                return [[x1,y1],[x2,y1],[x2,y2],[x1,y2]]
         return None
     except:
         return None
@@ -497,8 +511,14 @@ def recadrer_depuis_coins(img_pil, coins, mode="couleur"):
 def image_vers_pdf(img):
     if img.mode != "RGB":
         img = img.convert("RGB")
+    # Upscale si l'image est trop petite pour donner un PDF lisible
+    w, h = img.size
+    MIN_DIM = 1200  # px minimum pour un PDF A4 correct
+    if max(w, h) < MIN_DIM:
+        scale = MIN_DIM / max(w, h)
+        img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
     buf = io.BytesIO()
-    img.save(buf, format="PDF", resolution=150)
+    img.save(buf, format="PDF", resolution=200)
     buf.seek(0)
     return buf.getvalue(), img
 
@@ -590,8 +610,7 @@ def afficher_canvas(img_pil, coins_initiales, prefix, sk_local):
     st.session_state[f"canvas_sy_{prefix}_{sk_local}"] = sy
 
     coins_json_key = f"canvas_coins_json_{prefix}_{sk_local}"
-    # Toujours initialiser avec les coins courants (détectés ou par défaut)
-    # afin que le fallback Python ait toujours des coords valides
+    # Initialisation uniquement si la clé n'existe pas encore
     if coins_json_key not in st.session_state:
         st.session_state[coins_json_key] = json.dumps(cd)
 
@@ -599,13 +618,14 @@ def afficher_canvas(img_pil, coins_initiales, prefix, sk_local):
     relay_val = st.text_input("_coins_", key=relay_key, label_visibility="collapsed",
                                value=st.session_state[coins_json_key])
 
-    # Mettre à jour même si la valeur semble identique en surface
-    # (le relay peut contenir les coords modifiées par l'utilisateur)
+    # TOUJOURS mettre à jour coins_json_key depuis le relay si valide
+    # (le relay est mis à jour par sendCoins() côté JS à chaque déplacement de coin)
     if relay_val:
         try:
             parsed_relay = json.loads(relay_val)
-            if isinstance(parsed_relay, list) and len(parsed_relay) == 4:
-                st.session_state[coins_json_key] = relay_val
+            if (isinstance(parsed_relay, list) and len(parsed_relay) == 4
+                    and all(isinstance(p, list) and len(p) == 2 for p in parsed_relay)):
+                st.session_state[coins_json_key] = relay_val  # toujours écraser
         except Exception:
             pass
 
@@ -707,7 +727,11 @@ cv.addEventListener('mouseup',()=>{{drag=null;sendCoins();draw();}});
 cv.addEventListener('touchend',()=>{{drag=null;sendCoins();draw();}});
 </script></body></html>"""
 
-    components.html(html, height=int(hd * 320 / wd) + 40, scrolling=False)
+    # Hauteur = proportionnelle à la VRAIE largeur d'affichage (480px max = block-container)
+    # et non à 320px, sinon les coordonnées des coins sont décalées visuellement.
+    display_w = 460  # largeur utile estimée du block-container mobile (480px - padding)
+    display_h = int(hd * display_w / wd)
+    components.html(html, height=display_h + 50, scrolling=False)
     return coins_json_key
 
 
