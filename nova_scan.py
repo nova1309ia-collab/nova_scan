@@ -610,17 +610,28 @@ def afficher_canvas(img_pil, coins_initiales, prefix, sk_local):
     st.session_state[f"canvas_sy_{prefix}_{sk_local}"] = sy
 
     coins_json_key = f"canvas_coins_json_{prefix}_{sk_local}"
-    # Toujours réinitialiser avec les coins courants (évite les coords obsolètes)
-    # On force l'écriture à chaque rendu pour que les coins auto-détectés soient bien pris
-    st.session_state[coins_json_key] = json.dumps(cd)
+    relay_key      = f"relay_coins_{prefix}_{sk_local}"
 
-    relay_key = f"relay_coins_{prefix}_{sk_local}"
-    relay_val = st.text_input("_coins_", key=relay_key, label_visibility="collapsed",
-                               value=st.session_state[coins_json_key])
+    # Initialiser le relay UNE SEULE FOIS avec les coins courants.
+    # NE PAS écraser ensuite : c'est le JS (sendCoins) qui écrit dedans via nativeSetter.
+    # Passer value= à st.text_input réinitialiserait la valeur à chaque rerun et casserait la comm JS→Python.
+    if relay_key not in st.session_state:
+        st.session_state[relay_key] = json.dumps(cd)
 
-    # Mettre à jour coins_json_key depuis le relay SEULEMENT si différent des coins initiaux
-    # (le relay est mis à jour par sendCoins() côté JS à chaque déplacement de coin)
-    if relay_val and relay_val != json.dumps(cd):
+    # Si les coins ont changé côté Python (ex: détection auto), forcer la mise à jour
+    # SEULEMENT quand coins_initiales vient de changer (on le détecte via prev_init_key)
+    prev_init_key = f"canvas_prev_init_{prefix}_{sk_local}"
+    current_init  = json.dumps(cd)
+    if st.session_state.get(prev_init_key) != current_init:
+        st.session_state[prev_init_key] = current_init
+        st.session_state[relay_key]     = current_init
+
+    # Le text_input sans value= : Streamlit lit session_state[relay_key] comme valeur initiale
+    # mais ne l'écrase PAS au rerun → le JS peut écrire dedans librement
+    relay_val = st.text_input("_coins_", key=relay_key, label_visibility="collapsed")
+
+    # Synchroniser coins_json_key depuis le relay si valide
+    if relay_val:
         try:
             parsed_relay = json.loads(relay_val)
             if (isinstance(parsed_relay, list) and len(parsed_relay) == 4
@@ -852,9 +863,8 @@ def flux_image(img_pil, nom_pdf, prefix):
                 st.rerun()
         with col2:
             if st.button("✅ Recadrer & Générer PDF", key=f"confirm_{prefix}_{sk_local}", use_container_width=True):
-                # Lire d'abord le relay (mis à jour par JS), puis fallback sur coins_json_key
-                relay_key_read = f"relay_coins_{prefix}_{sk_local}"
-                raw = st.session_state.get(relay_key_read, "") or st.session_state.get(coins_json_key, "")
+                # coins_json_key est synchronisé depuis le relay JS à chaque déplacement
+                raw = st.session_state.get(coins_json_key, "")
                 sx_val = st.session_state.get(f"canvas_sx_{prefix}_{sk_local}", 1.0)
                 sy_val = st.session_state.get(f"canvas_sy_{prefix}_{sk_local}", 1.0)
                 corners_ok = False
