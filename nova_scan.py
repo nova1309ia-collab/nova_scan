@@ -399,6 +399,47 @@ if "scan_key" not in st.session_state:
     st.session_state["scan_key"] = 0
 sk = st.session_state["scan_key"]
 
+# ══ PONT postMessage → Streamlit ══════════════════════════════════════════════
+# Le canvas (iframe) ne peut pas modifier le DOM parent (cross-origin).
+# Solution : le JS dans l'iframe envoie window.parent.postMessage({novaAction:...}).
+# Un script injecté dans la PAGE PARENTE écoute ce message et écrit dans le
+# st.text_input caché ci-dessous, ce qui déclenche un rerun Streamlit natif.
+#
+# Format du message envoyé par le canvas :
+#   { novaAction: "crop",  prefix: "mob"|"imp", coins: [[x,y],...] }
+#   { novaAction: "skip",  prefix: "mob"|"imp" }
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Input caché qui reçoit la valeur bridgée
+_bridge_raw = st.text_input("__bridge__", key="__bridge_input__",
+                             label_visibility="collapsed", value="")
+
+# Script côté page-parente : écoute postMessage et copie dans l'input Streamlit
+st.markdown("""
+<script>
+(function(){
+  if(window.__novaBridgeReady) return;
+  window.__novaBridgeReady = true;
+  window.addEventListener('message', function(e){
+    var d = e.data;
+    if(!d || d.novaAction !== 'crop' && d.novaAction !== 'skip') return;
+    // Trouver le input caché de Streamlit
+    var inputs = Array.from(document.querySelectorAll('input[type="text"]'));
+    var inp = inputs.find(function(i){ return i.value === '' || i.value.startsWith('{'); });
+    if(!inp){
+      // Fallback : premier input texte caché (div display:none parent)
+      inp = document.querySelector('div[data-testid="stTextInput"] input');
+    }
+    if(!inp) return;
+    var val = JSON.stringify(d);
+    var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;
+    nativeSetter.call(inp, val);
+    inp.dispatchEvent(new Event('input', {bubbles: true}));
+  });
+})();
+</script>
+""", unsafe_allow_html=True)
+
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def corriger_orientation(img):
@@ -584,13 +625,13 @@ body{background:transparent;font-family:'DM Sans',sans-serif;padding:0}
 # ── Canvas interactif — bouton "Recadrer" intégré dans le HTML ───────────────
 def afficher_canvas(img_pil, coins_initiales, prefix, sk_local):
     """
-    Affiche le canvas + bouton Recadrer DANS le HTML.
-    Communication JS→Python via st.query_params :
-      - l'utilisateur déplace les coins
-      - clique "Recadrer" dans le canvas
-      - le JS écrit  ?coins_mob=[[…]]&crop_mob=1  dans window.parent.location
-      - Streamlit lit ces params au rerun suivant
-    Aucun st.text_input relay — on évite le cross-origin DOM.
+    Affiche le canvas + boutons Recadrer / Sans recadrage dans un composant HTML.
+    Communication JS→Python via postMessage (cross-origin safe) :
+      - l'utilisateur déplace les coins puis clique "Recadrer"
+      - le JS envoie window.parent.postMessage({novaAction:'crop', prefix, coins})
+      - le script injecté dans la page parente copie ce message dans le st.text_input
+        caché (__bridge_input__), ce qui déclenche un rerun Streamlit natif
+      - flux_image() lit session_state["__bridge_input__"] et change l'état
     """
     import streamlit.components.v1 as components
 
@@ -615,10 +656,6 @@ def afficher_canvas(img_pil, coins_initiales, prefix, sk_local):
 
     st.session_state[f"canvas_sx_{prefix}_{sk_local}"] = sx
     st.session_state[f"canvas_sy_{prefix}_{sk_local}"] = sy
-
-    # Clé qui identifie ce déclenchement de recadrage dans les query_params
-    qp_coins_key = f"coins_{prefix}"
-    qp_crop_key  = f"crop_{prefix}"
 
     html = f"""<!DOCTYPE html><html><head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -704,31 +741,20 @@ function hit(p){{
   for(let i=0;i<4;i++){{const dx=p.x-coins[i].x,dy=p.y-coins[i].y;
     if(Math.sqrt(dx*dx+dy*dy)<R*2.4)return i;}} return null;
 }}
-function setQP(params){{
-  /* Modifie les query params de la page parente pour déclencher un rerun Streamlit */
-  try{{
-    const url=new URL(window.parent.location.href);
-    for(const[k,v] of Object.entries(params)) url.searchParams.set(k,v);
-    window.parent.history.pushState({{}},'',url.toString());
-    /* Déclenche le rerun Streamlit en simulant une navigation */
-    window.parent.dispatchEvent(new PopStateEvent('popstate',{{state:{{}}}}));
-  }}catch(e){{
-    /* Fallback si cross-origin : forcer navigation complète */
-    try{{
-      const url=new URL(window.parent.location.href);
-      for(const[k,v] of Object.entries(params)) url.searchParams.set(k,v);
-      window.parent.location.href=url.toString();
-    }}catch(e2){{}}
-  }}
+function sendAction(action, coinsData){{
+  /* postMessage fonctionne cross-origin : l'iframe → page parente */
+  var msg = {{novaAction: action, prefix: '{prefix}'}};
+  if(coinsData) msg.coins = coinsData;
+  window.parent.postMessage(msg, '*');
 }}
 function doCrop(){{
   const disp=coins.map(c=>[Math.round(c.x),Math.round(c.y)]);
   document.getElementById('btnCrop').textContent='⏳ Génération...';
   document.getElementById('btnCrop').disabled=true;
-  setQP({{'{qp_coins_key}':JSON.stringify(disp),'{qp_crop_key}':'1'}});
+  sendAction('crop', disp);
 }}
 function doSkip(){{
-  setQP({{'{qp_crop_key}':'skip'}});
+  sendAction('skip');
 }}
 cv.addEventListener('mousedown',e=>{{e.preventDefault();drag=hit(gp(e));draw();}});
 cv.addEventListener('touchstart',e=>{{e.preventDefault();drag=hit(gp(e));draw();}},{{passive:false}});
@@ -742,7 +768,6 @@ cv.addEventListener('touchend',()=>{{drag=null;draw();}});
     display_h = int(hd * display_w / wd)
     # +120 pour les deux boutons en dessous du canvas
     components.html(html, height=display_h + 120, scrolling=False)
-    return qp_coins_key
 
 
 # ── Affichage résultat ────────────────────────────────────────────────────────
@@ -795,10 +820,6 @@ def flux_image(img_pil, nom_pdf, prefix):
     nom_key     = f"nom_pdf_{prefix}"
     mode_key    = f"mode_{prefix}"
 
-    # Clés query_params attendues (correspondant à celles générées dans afficher_canvas)
-    qp_coins_key = f"coins_{prefix}"
-    qp_crop_key  = f"crop_{prefix}"
-
     if img_b64_key not in st.session_state:
         st.session_state[img_b64_key] = img_to_b64(img_pil)
         st.session_state[nom_key] = nom_pdf
@@ -811,56 +832,54 @@ def flux_image(img_pil, nom_pdf, prefix):
     nom_pdf = st.session_state[nom_key]
     state   = st.session_state[state_key]
 
-    # ── Lecture des query_params générés par le bouton dans le canvas HTML ──
-    qp = st.query_params
-    crop_action = qp.get(qp_crop_key, "")
-
-    if crop_action == "1" and state == "canvas":
-        # L'utilisateur a cliqué "Recadrer" dans le canvas
-        raw_coins = qp.get(qp_coins_key, "")
-        sx_val = st.session_state.get(f"canvas_sx_{prefix}_{sk_local}", 1.0)
-        sy_val = st.session_state.get(f"canvas_sy_{prefix}_{sk_local}", 1.0)
-        mode_map = {"🎨 Couleur": "couleur", "🌫️ Niveaux de gris": "gris", "📄 Noir & Blanc": "nb"}
-        mode_radio = st.session_state.get(f"mode_radio_{prefix}_{sk_local}", "🎨 Couleur")
-        st.session_state[mode_key] = mode_map.get(mode_radio, "couleur")
-
-        corners_ok = False
+    # ── Lecture du pont postMessage → st.text_input ──
+    bridge_raw = st.session_state.get("__bridge_input__", "")
+    bridge_msg = None
+    if bridge_raw:
         try:
-            parsed = json.loads(raw_coins) if raw_coins else None
-            if parsed and isinstance(parsed[0], list) and len(parsed) == 4:
-                w_orig, h_orig = img_pil.size
-                corners_orig = [[round(p[0] * sx_val), round(p[1] * sy_val)] for p in parsed]
-                valid = all(0 <= c[0] <= w_orig and 0 <= c[1] <= h_orig for c in corners_orig)
-                if valid:
-                    st.session_state[corners_key] = corners_orig
-                    st.session_state[badge_key]   = "manual"
-                    corners_ok = True
+            bridge_msg = json.loads(bridge_raw)
         except Exception:
             pass
 
-        if not corners_ok:
-            # Fallback : coins auto si dispo, sinon aucun recadrage
-            coins_auto = st.session_state.get(corners_key)
-            st.session_state[badge_key] = "auto" if coins_auto else "none"
+    # Vérifier que le message concerne bien ce prefix
+    if bridge_msg and bridge_msg.get("prefix") == prefix:
+        action = bridge_msg.get("novaAction", "")
 
-        st.session_state[state_key] = "result"
-        # Nettoyer les query_params pour éviter une ré-entrée au prochain rerun
-        try:
-            if qp_crop_key  in st.query_params: del st.query_params[qp_crop_key]
-            if qp_coins_key in st.query_params: del st.query_params[qp_coins_key]
-        except Exception:
-            pass
-        st.rerun()
+        if action == "crop" and state == "canvas":
+            raw_coins = bridge_msg.get("coins")
+            sx_val = st.session_state.get(f"canvas_sx_{prefix}_{sk_local}", 1.0)
+            sy_val = st.session_state.get(f"canvas_sy_{prefix}_{sk_local}", 1.0)
+            mode_map = {"🎨 Couleur": "couleur", "🌫️ Niveaux de gris": "gris", "📄 Noir & Blanc": "nb"}
+            mode_radio = st.session_state.get(f"mode_radio_{prefix}_{sk_local}", "🎨 Couleur")
+            st.session_state[mode_key] = mode_map.get(mode_radio, "couleur")
 
-    elif crop_action == "skip" and state == "canvas":
-        # L'utilisateur a cliqué "Sans recadrage"
-        st.session_state[badge_key]  = "none"
-        st.session_state[state_key]  = "result"
-        try:
-            if qp_crop_key in st.query_params: del st.query_params[qp_crop_key]
-        except Exception:
-            pass
-        st.rerun()
+            corners_ok = False
+            try:
+                if raw_coins and isinstance(raw_coins, list) and len(raw_coins) == 4:
+                    w_orig, h_orig = img_pil.size
+                    corners_orig = [[round(p[0] * sx_val), round(p[1] * sy_val)] for p in raw_coins]
+                    valid = all(0 <= c[0] <= w_orig and 0 <= c[1] <= h_orig for c in corners_orig)
+                    if valid:
+                        st.session_state[corners_key] = corners_orig
+                        st.session_state[badge_key]   = "manual"
+                        corners_ok = True
+            except Exception:
+                pass
+
+            if not corners_ok:
+                coins_auto = st.session_state.get(corners_key)
+                st.session_state[badge_key] = "auto" if coins_auto else "none"
+
+            st.session_state[state_key] = "result"
+            # Vider le bridge pour éviter une ré-entrée
+            st.session_state["__bridge_input__"] = ""
+            st.rerun()
+
+        elif action == "skip" and state == "canvas":
+            st.session_state[badge_key]  = "none"
+            st.session_state[state_key]  = "result"
+            st.session_state["__bridge_input__"] = ""
+            st.rerun()
 
     # ── CANVAS ──
     if state == "canvas":
