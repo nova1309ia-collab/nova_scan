@@ -445,11 +445,18 @@ def detecter_contour_auto(img_pil):
             for tol in [0.02, 0.03, 0.05]:
                 approx = cv2.approxPolyDP(c, tol*peri, True)
                 if len(approx)==4 and cv2.contourArea(c)>(small.shape[0]*small.shape[1]*0.15):
-                    pts = (approx.reshape(4,2)/sc).astype(np.float32)
-                    s=pts.sum(axis=1); diff=np.diff(pts,axis=1)
+                    # Coords en espace original
+                    pts_orig = (approx.reshape(4,2).astype(np.float32)) / sc
+                    # Etendre de 6% horizontal et 10% vertical pour inclure titre/pied
+                    cx_o = pts_orig[:,0].mean()
+                    cy_o = pts_orig[:,1].mean()
+                    for i in range(4):
+                        pts_orig[i,0] = np.clip(cx_o + (pts_orig[i,0]-cx_o)*1.06, 0, w)
+                        pts_orig[i,1] = np.clip(cy_o + (pts_orig[i,1]-cy_o)*1.10, 0, h)
+                    s=pts_orig.sum(axis=1); diff=np.diff(pts_orig,axis=1).flatten()
                     o=np.zeros((4,2),dtype=np.float32)
-                    o[0]=pts[np.argmin(s)]; o[1]=pts[np.argmin(diff)]
-                    o[2]=pts[np.argmax(s)]; o[3]=pts[np.argmax(diff)]
+                    o[0]=pts_orig[np.argmin(s)]; o[1]=pts_orig[np.argmin(diff)]
+                    o[2]=pts_orig[np.argmax(s)]; o[3]=pts_orig[np.argmax(diff)]
                     return o.tolist()
         # Fallback : bounding rect du plus grand contour
         if cnts:
@@ -459,7 +466,7 @@ def detecter_contour_auto(img_pil):
                 x,y,bw,bh = cv2.boundingRect(c)
                 # Convertir en coords originales
                 x,y,bw,bh = x/sc, y/sc, bw/sc, bh/sc
-                pad = min(w,h)*0.01  # petit padding
+                pad = min(w,h)*0.04  # padding 4% pour inclure titre/pied de page
                 x1,y1 = max(0,x-pad), max(0,y-pad)
                 x2,y2 = min(w,x+bw+pad), min(h,y+bh+pad)
                 return [[x1,y1],[x2,y1],[x2,y2],[x1,y2]]
