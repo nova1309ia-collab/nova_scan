@@ -453,10 +453,23 @@ def detecter_contour_auto(img_pil):
     except:
         return None
 
+def _ordonner_coins(pts):
+    """Réordonne 4 points en [haut-gauche, haut-droit, bas-droit, bas-gauche].
+    Fonctionne quelle que soit l'ordre d'entrée (canvas, détection auto, manuel)."""
+    pts = np.array(pts, dtype=np.float32)
+    s = pts.sum(axis=1)
+    diff = np.diff(pts, axis=1).flatten()
+    ordered = np.zeros((4, 2), dtype=np.float32)
+    ordered[0] = pts[np.argmin(s)]    # haut-gauche  : x+y minimal
+    ordered[2] = pts[np.argmax(s)]    # bas-droit     : x+y maximal
+    ordered[1] = pts[np.argmin(diff)] # haut-droit    : x-y minimal
+    ordered[3] = pts[np.argmax(diff)] # bas-gauche    : x-y maximal
+    return ordered
+
 def recadrer_depuis_coins(img_pil, coins, mode="couleur"):
     import cv2
     img_np = np.array(img_pil.convert("RGB"))
-    pts = np.array(coins, dtype=np.float32)
+    pts = _ordonner_coins(coins)  # ← ordre garanti : TL, TR, BR, BL
     wA=np.linalg.norm(pts[2]-pts[3]); wB=np.linalg.norm(pts[1]-pts[0])
     hA=np.linalg.norm(pts[1]-pts[2]); hB=np.linalg.norm(pts[0]-pts[3])
     mW=int(max(wA,wB)); mH=int(max(hA,hB))
